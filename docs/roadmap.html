@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg on" href="roadmap.html">優化步驟</a></div></div>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg on" href="roadmap.html">優化步驟</a><a class="pg" href="ui-verify.html">UI 驗證實作</a></div></div>
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">落地路線圖 · 可勾選追蹤</div>
@@ -59,6 +59,7 @@
       <li><input type="checkbox" id="c2e"><label for="c2e">用檔名後綴傳遞約束（例：<code>*.hot.ts</code> 熱路徑禁止配置）並以 Lint 強制</label></li>
       <li><input type="checkbox" id="c2f"><label for="c2f">把需要「微妙技巧」的 API（如 <code>useEffect</code>）封裝進底層，業務碼禁用</label></li>
       <li><input type="checkbox" id="c2h"><label for="c2h">把效能預算放進 CI：bundle 大小、首屏時間超標就讓建置失敗（tibo.dog：首次下載 &gt; 預算即 fail）</label></li>
+      <li><input type="checkbox" id="c2i"><label for="c2i">UI 專屬 Lint：業務碼禁用 <code>useEffect</code>、禁止用 <code>setTimeout</code> 修閃爍，錯誤訊息附正確寫法（<a href="ui-verify.html#lint">設定範例</a>）</label></li>
       <li><input type="checkbox" id="c2g"><label for="c2g">建立固定節奏：每糾正 Agent 一次 → 評估是否新增一條 Lint（7 → 167 就是這樣累積的）</label></li>
     </ul>
   </div></div>
@@ -79,6 +80,10 @@
     <ul class="check">
       <li><input type="checkbox" id="c4a"><label for="c4a">為核心頁面寫最小 Feature Map：功能、到達路徑、什麼狀態算成功</label></li>
       <li><input type="checkbox" id="c4b"><label for="c4b">把 CDP / Playwright 操作包成 CLI（aria-click、snapshot、screenshot），並替 CLI 寫測試</label></li>
+      <li><input type="checkbox" id="c4f"><label for="c4f">把 Feature Map 寫成可執行的流程檔（<code>flows/*.json</code>），同一個流程檔修前、修後各跑一次（<a href="ui-verify.html#browser">範例腳本</a>）</label></li>
+      <li><input type="checkbox" id="c4g"><label for="c4g">修 UI Bug 一律「先重現（before 必須失敗）→ 根因 → 修 → after 必須通過」，PR 附對照表</label></li>
+      <li><input type="checkbox" id="c4h"><label for="c4h">用 hook / CI 強制：改到 UI 檔案卻沒有新的通過證據，Agent 不能宣告完成、PR 不能合入（<a href="ui-verify.html#browser">hook 範例</a>）</label></li>
+      <li><input type="checkbox" id="c4i"><label for="c4i">改動前先拍一輪視覺基準圖，之後做新舊比對抓跑版與閃爍</label></li>
       <li><input type="checkbox" id="c4c"><label for="c4c">規定 UI 類 PR 必附截圖或影片，審查者先看證據再決定要不要看 diff</label></li>
       <li><input type="checkbox" id="c4e"><label for="c4e">讓核心邏輯可重播（確定性 / 事件記錄），Bug 可重現、Agent 能自行重播驗證</label></li>
       <li><input type="checkbox" id="c4d"><label for="c4d">複雜互動用 <code>/statechart</code> 畫狀態機一併審查</label></li>
@@ -92,6 +97,7 @@
       <li><input type="checkbox" id="c5a"><label for="c5a">派工只寫「目標 / 完成標準 / 實跑證據」，交給 <code>/poteto-mode</code> 路由劇本</label></li>
       <li><input type="checkbox" id="c5b"><label for="c5b">動手前先 <code>/how</code> + <code>/why</code>；關鍵設計用 <code>/arena</code> 多稿 + <code>/interrogate</code> 對抗審查</label></li>
       <li><input type="checkbox" id="c5c"><label for="c5c">拆成窄 PR 棧；寫碼 Agent 不得自審，每個 PR 由全新 Agent 實跑驗證</label></li>
+      <li><input type="checkbox" id="c5g"><label for="c5g">UI 類 PR 加一道使用者視角盲測：驗收 Agent 不給 diff，只給 Feature Map 與改動描述（<a href="ui-verify.html#blind">提示詞範本</a>）</label></li>
       <li><input type="checkbox" id="c5d"><label for="c5d">異質模型分工：快模型寫碼、強模型做架構與裁判</label></li>
       <li><input type="checkbox" id="c5e"><label for="c5e">可選：<code>/pstack:automate-me</code> 從你自己的對話記錄提煉專屬 <code>&lt;名字&gt;-mode</code></label></li>
     </ul>
@@ -103,6 +109,7 @@
       <li><input type="checkbox" id="c6a"><label for="c6a">挑出 1–2 條高風險流程（並發重試、跨裝置同步、付款狀態機）</label></li>
       <li><input type="checkbox" id="c6b"><label for="c6b">用 <code>/create-formal-verification-skill</code> 建 TLA+ 模型；交付前先在改壞的變體上報錯</label></li>
       <li><input type="checkbox" id="c6c"><label for="c6c">UI 層加屬性測試（Bombadil）自動探索邊界 Bug</label></li>
+      <li><input type="checkbox" id="c6d"><label for="c6d">替核心頁面寫 3–5 條 UI 不變式（無錯誤、不卡死、畫面與資料一致），失敗序列存成回歸流程（<a href="ui-verify.html#pbt">做法</a>）</label></li>
     </ul>
   </div></div>
 
@@ -132,7 +139,7 @@
     <div class="card small"><b>一句話總結</b><br>護城河正從「自己手寫每一行」轉向「搭一套確定性環境，讓 Agent 很難寫出垃圾，並且能自己證明它是對的」。</div>
   </div>
 </section>
-<div class="pager"><a href="pstack.html"><small>← 上一頁</small>pstack 開源</a></div>
+<div class="pager"><a href="pstack.html"><small>← 上一頁</small>pstack 開源</a><a class="next" href="ui-verify.html"><small>下一頁 →</small>UI 驗證實作</a></div>
 </main>
 <footer><div class="wrap">資料來源：<br>
 ・<a href="https://zhuanlan.zhihu.com/p/2104561652888876670">Grok Bot 工程師土豆姐：所有程式碼都是垃圾（我的除外）— Ai學習的老章，知乎，2026-11-13</a><br>

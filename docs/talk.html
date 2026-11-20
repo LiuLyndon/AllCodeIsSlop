@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg on" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a></div></div>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg on" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a><a class="pg" href="ui-verify.html">UI 驗證實作</a></div></div>
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">AI Engineer Code Summit · 17 分鐘演講拆解</div>
@@ -419,6 +419,7 @@ $ app screenshot proof.png</code></pre>
     </svg>
     <figcaption>重新繪製自演講「執行期驗證：Feature Map 搭配可重用 CLI」；功能檔名為示意。下排為 pstack 指南中 verify 技能的五個段落，產生後會先完整跑一次證明可用。</figcaption>
   </figure>
+  <div class="card small"><b>網頁 / UI 改動的硬規定</b>：只要改動碰到 UI，「編譯過了」「單元測試通過」都不算完成；Agent 必須實際啟動瀏覽器或 App 走過使用者流程，修 Bug 時要先在介面上重現（修前失敗），再用同一流程證明修後通過。完整流程、瀏覽器腳本與強制留證的 hook 範例見 <a href="ui-verify.html">UI 驗證實作</a>。</div>
 
   <h3>形式化驗證詳解：TLA+ 狀態機建模與 Lean 程式碼證明</h3>
   <p>測試只檢查「有人想到要寫」的案例；形式化驗證檢查<b>一個明確範圍內的每一種情況</b>：模型裡所有步驟的先後順序、某個界限內的所有輸入，或是全部輸入。它用在 Bug 代價最高、但測試最難碰到的地方：兩個重疊的重試、寫到一半過期的鎖、亂序到達的狀態變更。</p>
@@ -433,6 +434,7 @@ $ app screenshot proof.png</code></pre>
     </tbody>
   </table>
   </div>
+  <p class="small muted">屬性測試在 UI 上的用法：先寫「不管怎麼操作都必須成立」的規則（不出錯、不卡死、畫面與資料一致），再讓工具隨機產生大量操作順序去打破它。演講只提到工具名稱，不變式清單與示意程式見 <a href="ui-verify.html#pbt">UI 驗證實作 › 屬性測試</a>。</p>
 
   <figure class="fig">
     <svg viewBox="0 0 760 270" role="img" aria-label="依問題選工具：壞順序用 TLA+，程式對每個輸入正確用程式碼驗證器，任何規模成立用 Lean，沒有驗證器就用屬性測試">

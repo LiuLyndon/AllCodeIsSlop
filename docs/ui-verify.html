@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI 驗證實作</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a><a class="pg on" href="ui-verify.html">UI 驗證實作</a></div></div>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">網頁 / UI 改動 · 從「說過了」到「拿證據」</div>
+    <h1>UI 驗證實作<small>讓代理真的開瀏覽器、點過一遍、交出證據</small></h1>
+    <p class="lede">把演講與 pstack 對網頁、UI 的要求整理成一條完整流程，並補上落地需要的設定與範例程式。<b>原則只有一條：只要改動碰到 UI，「編譯過了」「單元測試通過」都不算完成，必須有實際操作的證據。</b></p>
+    <nav class="toc"><div class="wrap"><a href="#coverage">來源對照</a><a href="#flow">整體流程</a><a href="#browser">讓代理開瀏覽器</a><a href="#evidence">證據與對照</a><a href="#blind">獨立盲測</a><a href="#pbt">屬性測試</a><a href="#lint">Lint 護欄</a></div></nav>
+  </div>
+</header>
+<main class="wrap">
+
+<section id="coverage">
+  <h2><span class="num">00</span>四個做法在來源中的位置</h2>
+  <p class="sub">本頁把散在各處的內容合併成一條流程。下表標明哪些是來源原話、哪些是本站為了落地補上的延伸。</p>
+  <div class="tscroll">
+  <table class="tbl">
+    <thead><tr><th>做法</th><th>來源中怎麼寫</th><th>本站詳述位置</th><th>本頁延伸</th></tr></thead>
+    <tbody>
+      <tr><td><b>1. 執行期驗證</b></td><td>Feature Map＋CLI 自己啟動 App 點一遍；人只審影片、截圖、狀態機圖；bug fix 劇本「重現 → 根因 → 修復 → 附執行期證據」；原則 <i>prove it works</i></td><td><a href="talk.html#verify">演講 › 驗證體系</a>、<a href="pstack.html">pstack › 劇本</a></td><td>可直接用的 Playwright 流程腳本、修前／修後對照、效能圖表、強制執行的 hook</td></tr>
+      <tr><td><b>2. 獨立盲測</b></td><td>寫碼 Agent 嚴禁自審，每個 PR 派全新 Agent 實跑驗真（<code>playbooks/shipping.md</code>）</td><td><a href="pstack.html">pstack › 獨立驗收流水線</a></td><td>不給 diff、只給 Feature Map 的「使用者視角」驗收提示詞</td></tr>
+      <tr><td><b>3. UI 屬性測試</b></td><td>驗證方法表中一列：Bombadil，隨機產生大量輸入與操作序列，探索 UI 邊界</td><td><a href="talk.html#verify">演講 › 驗證方法表</a></td><td>要檢查哪些不變式、怎麼把失敗序列固定成回歸測試、示意程式</td></tr>
+      <tr><td><b>4. Lint 護欄</b></td><td>Dune 業務碼禁用 <code>useEffect</code>；1 個 <code>setTimeout</code> 五週變 183 個；Lint 規則 7 → 167；<i>encode-lessons-in-structure</i></td><td><a href="talk.html#codebase">演講 › 程式碼庫</a></td><td>ESLint 設定範例（錯誤訊息附修正方式）</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="flow">
+  <h2><span class="num">01</span>整體流程：一個 UI 改動從派工到合入</h2>
+  <p class="sub">階段 0 只做一次；階段 1–6 每個任務都走一遍；階段 7 讓同樣的錯不再出現第二次。</p>
+  <figure class="fig">
+    <svg viewBox="0 0 760 300" role="img" aria-label="UI 改動流程：搭環境，派工，開發含重現與對照，提交證據優先的 PR，屬性測試，獨立 Agent 盲測驗收，合入；每次糾正都回饋成 Lint 或測試">
+      <defs><marker id="u1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah-acc"/></marker></defs>
+      <rect x="10" y="20" width="170" height="70" rx="12" class="box-mut"/>
+      <text x="95" y="48" text-anchor="middle" class="t-m" font-weight="700">0 搭環境</text>
+      <text x="95" y="70" text-anchor="middle" class="t-s mut">CLI・Feature Map・基準圖</text>
+      <line x1="182" y1="55" x2="206" y2="55" class="ln-acc" marker-end="url(#u1)"/>
+      <rect x="210" y="20" width="160" height="70" rx="12" class="box"/>
+      <text x="290" y="48" text-anchor="middle" class="t-m" font-weight="700">1 派工</text>
+      <text x="290" y="70" text-anchor="middle" class="t-s mut">目標・完成標準・證據</text>
+      <line x1="372" y1="55" x2="396" y2="55" class="ln-acc" marker-end="url(#u1)"/>
+      <rect x="400" y="20" width="170" height="70" rx="12" class="box-acc"/>
+      <text x="485" y="48" text-anchor="middle" class="t-m" font-weight="700">2 開發</text>
+      <text x="485" y="70" text-anchor="middle" class="t-s">先重現 → 根因 → 修</text>
+      <line x1="572" y1="55" x2="596" y2="55" class="ln-acc" marker-end="url(#u1)"/>
+      <rect x="600" y="20" width="150" height="70" rx="12" class="box-acc"/>
+      <text x="675" y="48" text-anchor="middle" class="t-m" font-weight="700">3 實跑留證</text>
+      <text x="675" y="70" text-anchor="middle" class="t-s">修前失敗／修後通過</text>
+      <line x1="675" y1="92" x2="675" y2="126" class="ln-acc" marker-end="url(#u1)"/>
+      <rect x="600" y="130" width="150" height="70" rx="12" class="box"/>
+      <text x="675" y="158" text-anchor="middle" class="t-m" font-weight="700">4 PR</text>
+      <text x="675" y="180" text-anchor="middle" class="t-s mut">審查者先看證據</text>
+      <line x1="598" y1="165" x2="574" y2="165" class="ln-acc" marker-end="url(#u1)"/>
+      <rect x="400" y="130" width="170" height="70" rx="12" class="box"/>
+      <text x="485" y="158" text-anchor="middle" class="t-m" font-weight="700">5 屬性測試</text>
+      <text x="485" y="180" text-anchor="middle" class="t-s mut">隨機操作序列轟炸</text>
+      <line x1="398" y1="165" x2="374" y2="165" class="ln-acc" marker-end="url(#u1)"/>
+      <rect x="210" y="130" width="160" height="70" rx="12" class="box"/>
+      <text x="290" y="158" text-anchor="middle" class="t-m" font-weight="700">6 獨立盲測</text>
+      <text x="290" y="180" text-anchor="middle" class="t-s mut">全新 Agent・不看 diff</text>
+      <line x1="208" y1="165" x2="184" y2="165" class="ln-acc" marker-end="url(#u1)"/>
+      <rect x="10" y="130" width="170" height="70" rx="12" class="box-good"/>
+      <text x="95" y="158" text-anchor="middle" class="t-m good" font-weight="700">合入</text>
+      <text x="95" y="180" text-anchor="middle" class="t-s">窄 PR 棧由底向上</text>
+      <rect x="210" y="236" width="540" height="50" rx="12" class="box-bad"/>
+      <text x="480" y="258" text-anchor="middle" class="t-m" font-weight="700">7 把錯誤變成規則</text>
+      <text x="480" y="277" text-anchor="middle" class="t-s">任何一關被打回 → 修好後寫成 Lint / 測試，規則先在原 Bug 上報紅</text>
+      <line x1="290" y1="202" x2="290" y2="232" class="ln-dash"/>
+      <line x1="485" y1="202" x2="485" y2="232" class="ln-dash"/>
+      <line x1="675" y1="202" x2="675" y2="232" class="ln-dash"/>
+      <path d="M210,261 L195,261 L195,80 L184,80" class="ln-acc" marker-end="url(#u1)"/>
+      <text x="95" y="236" text-anchor="middle" class="t-s acc">回饋成下一輪的</text>
+      <text x="95" y="254" text-anchor="middle" class="t-s acc">環境與 Lint</text>
+    </svg>
+    <figcaption>本站依演講、pstack <code>bug-fix</code> 與 <code>shipping</code> 劇本整理的流程；階段 5 的屬性測試位置、階段 6 的「不給 diff」為本站延伸。</figcaption>
+  </figure>
+
+  <div class="tscroll">
+  <table class="tbl">
+    <thead><tr><th>階段</th><th>誰做</th><th>產出</th><th>沒有產出就…</th></tr></thead>
+    <tbody>
+      <tr><td><b>0 搭環境</b>（一次性）</td><td>人＋Agent</td><td>瀏覽器操作 CLI、Feature Map、視覺基準圖、Lint 基本盤、強制留證的 hook</td><td>後面每一關都只能靠人肉點</td></tr>
+      <tr><td><b>1 派工</b></td><td>人</td><td>三行任務單：目標／完成判定標準／要看的實跑證據</td><td>Agent 自己決定「怎樣算完成」</td></tr>
+      <tr><td><b>2 開發</b></td><td>寫碼 Agent</td><td>Bug：先寫出能重現的操作流程；功能：先寫好驗收流程</td><td>不准開始改程式</td></tr>
+      <tr><td><b>3 實跑留證</b></td><td>寫碼 Agent</td><td><code>evidence/&lt;任務&gt;/before</code>（失敗）與 <code>after</code>（通過）：截圖、影片、trace、必要時效能圖</td><td>hook 擋住 Agent，不准宣告完成</td></tr>
+      <tr><td><b>4 PR</b></td><td>寫碼 Agent → 人</td><td>PR 描述附證據；審查者先看影片／截圖再決定要不要翻 diff</td><td>CI 擋下 UI 類 PR</td></tr>
+      <tr><td><b>5 屬性測試</b></td><td>CI／每晚排程</td><td>隨機操作序列下的不變式報告；失敗序列縮成最小重現</td><td>失敗序列存成回歸測試後再修</td></tr>
+      <tr><td><b>6 獨立盲測</b></td><td>全新 Agent（最好換模型）</td><td>以使用者身分照 Feature Map 操作一遍的驗收報告＋證據＋PASS/FAIL</td><td>退回階段 2</td></tr>
+      <tr><td><b>7 規則化</b></td><td>人決定、Agent 寫</td><td>新 Lint 規則或測試，錯誤訊息附「正確寫法」</td><td>同一個錯會換個地方再長出來</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="browser">
+  <h2><span class="num">02</span>怎麼讓代理「真的」開瀏覽器、點過一遍</h2>
+  <p class="sub">拆成三件事：<b>給工具</b>（它有能力操作）、<b>給地圖</b>（它知道要點哪裡、怎樣算成功）、<b>給強制</b>（沒有證據就不能說完成）。只寫在 AGENTS.md 裡的「請記得用瀏覽器測試」，就是演講裡說的「寫在文字裡、不寫進工具」，早晚會被跳過。</p>
+
+  <h3>① 給工具：三種接法，擇一即可</h3>
+  <div class="grid g3">
+    <div class="card small"><b>A. 專案自帶 CLI（推薦，演講做法）</b><br>用 Playwright 或 Chrome DevTools Protocol 包成固定指令，所有 Agent、所有工具共用同一套。省 Token、可重跑、CLI 本身也能寫測試。下方有完整範例。</div>
+    <div class="card small"><b>B. pstack 產生的 verify 技能</b><br><code>/pstack:setup-pstack</code> 時答應產生 <code>/create-verification-skill</code>，會寫出 Launch → Doctor → Drive → Evidence → Cleanup 五段的 <code>verify-&lt;app&gt;</code> 技能。瀏覽器／Electron 操作可搭配 cursor-team-kit 的 <code>control-ui</code>。</div>
+    <div class="card small"><b>C. 代理工具內建的瀏覽器</b><br>Claude Code 可接 Playwright MCP 或 Claude in Chrome；Cursor 有內建瀏覽器。上手最快，但每次臨場摸索、較耗 Token，也較難在 CI 重跑。適合先體驗，穩定後再收斂成 A。</div>
+  </div>
+
+  <h3>A 的範例：一支「照流程點一遍並留證」的腳本</h3>
+  <p class="small">重點是<b>流程寫成資料檔</b>：同一個流程檔修之前跑一次、修之後再跑一次，就是「重現與對照」。Agent 不必每次重寫操作腳本，只要新增或修改流程檔。</p>
+<pre><code>npm i -D playwright &amp;&amp; npx playwright install chromium</code></pre>
+<pre><code>// scripts/ui-run.mjs
+// 用法：node scripts/ui-run.mjs flows/settings-save.json evidence/settings-save/after
+import { chromium } from 'playwright';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+
+const [flowPath, outDir = 'evidence/latest'] = process.argv.slice(2);
+const flow = JSON.parse(await readFile(flowPath, 'utf8'));
+await mkdir(outDir, { recursive: true });
+
+const browser = await chromium.launch();
+const context = await browser.newContext({ recordVideo: { dir: outDir } });
+await context.tracing.start({ screenshots: true, snapshots: true });
+const page = await context.newPage();
+
+const errors = [];
+page.on('pageerror', (e) =&gt; errors.push(`pageerror: ${e.message}`));
+page.on('console', (m) =&gt; m.type() === 'error' &amp;&amp; errors.push(`console: ${m.text()}`));
+
+const log = [];
+try {
+  for (const [i, s] of flow.steps.entries()) {
+    log.push({ i, ...s });
+    if (s.goto) await page.goto(new URL(s.goto, flow.baseURL).href);
+    if (s.click) await page.getByRole(s.click.role, { name: s.click.name }).click();
+    if (s.fill) await page.getByLabel(s.fill.label).fill(s.fill.value);
+    if (s.press) await page.keyboard.press(s.press);
+    if (s.expectText) await page.getByText(s.expectText).first().waitFor({ timeout: 5000 });
+    if (s.screenshot) await page.screenshot({ path: `${outDir}/${String(i).padStart(2, '0')}-${s.screenshot}.png`, fullPage: true });
+  }
+} catch (e) {
+  errors.push(`step failed: ${e.message.split('\n')[0]}`);
+  await page.screenshot({ path: `${outDir}/failure.png`, fullPage: true }).catch(() =&gt; {});
+}
+
+await context.tracing.stop({ path: `${outDir}/trace.zip` });
+await context.close();               // 關閉後影片才會寫入 outDir
+await browser.close();
+
+const result = { flow: flowPath, ok: errors.length === 0, errors, steps: log.length, at: new Date().toISOString() };
+await writeFile(`${outDir}/result.json`, JSON.stringify(result, null, 2));
+console.log(JSON.stringify(result, null, 2));
+process.exit(result.ok ? 0 : 1);</code></pre>
+<pre><code>// flows/settings-save.json —— 同時也是 Feature Map 裡「怎麼到達、什麼算成功」的可執行版本
+{
+  "baseURL": "http://localhost:5173",
+  "steps": [
+    { "goto": "/" },
+    { "click": { "role": "button", "name": "Settings" } },
+    { "fill": { "label": "Display name", "value": "Poteto" } },
+    { "click": { "role": "button", "name": "Save" } },
+    { "expectText": "Saved" },
+    { "screenshot": "saved" }
+  ]
+}</code></pre>
+  <p class="small muted">用 <code>getByRole</code>／<code>getByLabel</code> 以無障礙名稱定位（對應演講的 <code>app aria-click --accessible-name</code>），比 CSS selector 穩定，也順便逼出可及性問題。失敗時看 <code>npx playwright show-trace evidence/…/trace.zip</code>。</p>
+
+  <h3>② 給地圖：Feature Map 與 AGENTS.md 只寫「在哪裡」</h3>
+<pre><code>features/
+├─ README.md            # 索引：功能 → 流程檔 → 負責的原始碼路徑
+├─ settings.md          # 怎麼到達、什麼狀態算成功、已知邊界
+└─ chat-send.md
+flows/
+├─ settings-save.json   # 每個 features/*.md 至少對應一個可執行流程
+└─ chat-send.json</code></pre>
+<pre><code># AGENTS.md（只放索引與指令，不放長篇規則）
+## UI 驗證
+- 改到 src/** 的 .tsx/.css → 先啟動 `npm run dev`，再用 `node scripts/ui-run.mjs &lt;flow&gt; &lt;outDir&gt;`
+- 功能與流程對照：features/README.md
+- 修 Bug：先跑一次存到 evidence/&lt;task&gt;/before（必須失敗），修好再存到 evidence/&lt;task&gt;/after（必須通過）
+- 沒有 evidence 就不算完成（hook 會擋）</code></pre>
+
+  <h3>③ 給強制：沒有證據，Agent 不能宣告完成</h3>
+  <p class="small">這是「錯誤規則化」的同一個精神：不靠提醒，靠機器擋。兩道關卡：本機用代理工具的 hook，遠端用 CI。</p>
+  <div class="grid g2">
+    <div class="card small"><b>本機：Claude Code 的 Stop hook</b><br>Agent 想結束回合時執行；若改了 UI 檔案卻沒有比改動更新、而且通過的 <code>result.json</code>，就以 exit code 2 擋下，並把原因回傳給 Agent，讓它自己補跑。Cursor 等工具也有類似的 hook 機制。</div>
+    <div class="card small"><b>CI：PR 檢查</b><br>PR 改到 UI 路徑時，CI 自己再跑一次所有相關流程（不信任本機的結果），並把截圖、影片、trace 上傳成 artifact，連結貼回 PR。</div>
+  </div>
+<pre><code>// .claude/settings.json
+{
+  "hooks": {
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "node scripts/require-ui-evidence.mjs" } ] }
+    ]
+  }
+}</code></pre>
+<pre><code>// scripts/require-ui-evidence.mjs
+import { execSync } from 'node:child_process';
+import { statSync, readFileSync, existsSync, globSync } from 'node:fs';   // globSync：Node 22+
+
+const input = JSON.parse(readFileSync(0, 'utf8') || '{}');
+if (input.stop_hook_active) process.exit(0);          // 已被擋過一次，避免無限迴圈
+
+const sh = (c) =&gt; execSync(c, { encoding: 'utf8' }).split('\n').filter(Boolean);
+const changed = [...sh('git diff --name-only HEAD'), ...sh('git ls-files --others --exclude-standard')];
+const ui = changed.filter((f) =&gt; /^src\/.*\.(tsx|jsx|css|scss|html)$/.test(f) &amp;&amp; existsSync(f));
+if (ui.length === 0) process.exit(0);
+
+const newestChange = Math.max(...ui.map((f) =&gt; statSync(f).mtimeMs));
+const fresh = globSync('evidence/**/result.json')
+  .map((f) =&gt; ({ f, t: statSync(f).mtimeMs, r: JSON.parse(readFileSync(f, 'utf8')) }))
+  .filter((x) =&gt; x.t &gt; newestChange &amp;&amp; x.r.ok);
+
+if (fresh.length === 0) {
+  console.error([
+    '你改了 UI 檔案，但沒有比改動更新、且通過的操作證據：',
+    ...ui.map((f) =&gt; `  - ${f}`),
+    '請啟動 App，用 node scripts/ui-run.mjs &lt;flow&gt; evidence/&lt;task&gt;/after 跑相關流程；',
+    '若是修 Bug，還要附上修之前失敗的 evidence/&lt;task&gt;/before。',
+  ].join('\n'));
+  process.exit(2);                                    // 2 = 擋下並把 stderr 交給 Agent
+}</code></pre>
+<pre><code># .github/workflows/ui-evidence.yml（節錄）
+on: pull_request
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci &amp;&amp; npx playwright install --with-deps chromium
+      - run: npm run build &amp;&amp; (npm run preview &amp;) &amp;&amp; npx wait-on http://localhost:4173
+      - run: for f in flows/*.json; do node scripts/ui-run.mjs "$f" "evidence/ci/$(basename "$f" .json)" || exit 1; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: ui-evidence, path: evidence/ci }</code></pre>
+  <p class="small muted">以上為本站依演講精神寫的示意設定，路徑與埠號請依專案調整；CI 範例中的 baseURL 需與 preview 埠一致（可在流程檔外以環境變數覆寫）。</p>
+</section>
+
+<section id="evidence">
+  <h2><span class="num">03</span>證據規格：重現與對照</h2>
+  <div class="grid g2">
+    <div class="card">
+      <b>修 Bug 的固定動作</b>
+      <ol class="small">
+        <li>寫一個流程檔，最後一步斷言「正確行為」。</li>
+        <li>在<b>未修改</b>的程式上跑 → 存到 <code>before/</code>，<b>必須失敗</b>。不失敗代表沒重現到，不准開始修。</li>
+        <li>追根因、修。禁止加 <code>setTimeout</code>、重試、吞錯誤來讓它「看起來好了」。</li>
+        <li>同一個流程檔再跑 → 存到 <code>after/</code>，必須通過。</li>
+        <li>把這個流程檔留在 <code>flows/</code>，從此成為回歸測試。</li>
+      </ol>
+    </div>
+    <div class="card">
+      <b>PR 描述模板</b>
+<pre><code>## 證據
+| | 修前 | 修後 |
+|---|---|---|
+| 流程 | flows/settings-save.json | 同左 |
+| 結果 | ❌ step 4: "Saved" 未出現 | ✅ 6/6 |
+| 截圖 | before/failure.png | after/05-saved.png |
+| 影片 | before/*.webm | after/*.webm |
+
+視覺比對：與 baseline 差異 0 張（或列出預期內差異）
+效能（若相關）：互動延遲 / 長任務 前後對照圖</code></pre>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card small"><b>視覺回歸</b><br>改動前先拍一輪基準圖（pstack <code>decisions.tsv</code> 範例：「存下 120 張基準圖」），之後用 <code>expect(page).toHaveScreenshot()</code> 或像素比對找出跑版、閃爍。差異圖直接附在 PR。</div>
+    <div class="card small"><b>效能圖表（本站延伸）</b><br>來源只寫到影片、截圖、狀態機圖。若改動涉及效能，可用 Playwright 的 <code>tracing</code> 或 Chrome Performance 記錄修前修後的長任務、版面重排次數，輸出成圖表附上。</div>
+  </div>
+</section>
+
+<section id="blind">
+  <h2><span class="num">04</span>獨立盲測：換一個沒寫過這段程式的 Agent</h2>
+  <p class="sub">pstack 的規定是「寫碼 Agent 嚴禁自審，verdict 必須來自沒寫這段程式的 Agent」。寫碼的 Agent 只會去測它以為自己寫對的地方，所以驗收者<b>不給 diff、不給寫碼過程</b>，只給使用者會知道的東西。</p>
+  <div class="grid g2">
+    <div class="card small"><b>怎麼派</b>
+      <ul>
+        <li>開一個全新對話或子 Agent，最好換一個模型（異質模型，盲區不重疊）。</li>
+        <li>只給：Feature Map、這次改動的使用者描述、可以用的 CLI。</li>
+        <li>不給：diff、原始任務對話、寫碼 Agent 的自我評估。</li>
+        <li>要求它除了「快樂路徑」，還要刻意亂操作：連點、返回、重新整理、空值、超長輸入、窄螢幕。</li>
+      </ul>
+    </div>
+    <div class="card small"><b>驗收提示詞範本</b>
+<pre><code>你是第一次使用這個產品的使用者，也是驗收員。
+你看不到程式碼，只能透過 scripts/ui-run.mjs 或瀏覽器操作。
+功能說明：features/settings.md
+本次改動（使用者角度）：「設定頁的顯示名稱現在可以儲存」
+1. 照功能說明走完主要流程，每一步截圖。
+2. 再嘗試 5 種一般使用者可能做的奇怪操作。
+3. 輸出：PASS / FAIL、每個問題的重現步驟與證據路徑。
+不要提出修改程式的建議，只回報你看到的行為。</code></pre>
+    </div>
+  </div>
+  <p class="small muted">每個窄 PR 都派一個驗收員，只合入從棧底開始連續 PASS 的 PR（詳見 <a href="pstack.html">pstack › 窄 PR 棧與獨立驗收流水線</a>）。盲測抓到的問題要轉成新的 <code>flows/*.json</code>。</p>
+</section>
+
+<section id="pbt">
+  <h2><span class="num">05</span>UI 屬性測試：隨機狀態與邊界轟炸</h2>
+  <p class="sub">E2E 只測「有人想到要寫」的路徑。屬性測試反過來：先寫下<b>不管怎麼操作都必須成立</b>的規則（性質），再讓工具自動產生大量隨機的操作順序與輸入去試著打破它。演講中 Grok Bot 團隊使用 Antithesis 的 <b>Bombadil</b>（<code>antithesishq/bombadil</code>）做這件事。</p>
+  <div class="grid g2">
+    <div class="card small"><b>常用的 UI 不變式</b>
+      <ul>
+        <li>任何操作序列後，頁面都不會出現未處理的例外或 console error。</li>
+        <li>不會卡死：每個動作後，介面在 N 毫秒內回到可互動狀態。</li>
+        <li>狀態一致：畫面顯示的數量 = 資料層的數量（例如購物車徽章 = 列表項數）。</li>
+        <li>可逆：開啟後關閉對話框，焦點與捲動位置回到原處。</li>
+        <li>載入中與錯誤狀態最終一定會結束，不會永遠轉圈。</li>
+      </ul>
+    </div>
+    <div class="card small"><b>流程</b>
+      <ol>
+        <li>從 Feature Map 挑出核心頁面，列出可執行的動作集合。</li>
+        <li>寫 3–5 條不變式，先在一個<b>故意改壞</b>的版本上確認會報錯（同 pstack 對形式化驗證技能的要求）。</li>
+        <li>放進 CI 或每晚排程，固定隨機種子以便重現。</li>
+        <li>找到失敗 → 工具縮小成最短操作序列 → 存成 <code>flows/*.json</code> 回歸測試 → 再修。</li>
+      </ol>
+    </div>
+  </div>
+  <p class="small">沒有導入 Bombadil 時，也可以用 <code>fast-check</code> 的指令模型搭配 Playwright 做出同樣的效果（以下為示意）：</p>
+<pre><code>// tests/cart.property.spec.ts（示意）
+import { test } from '@playwright/test';
+import fc from 'fast-check';
+
+const actions = fc.array(fc.oneof(
+  fc.constant({ do: 'add' }),
+  fc.constant({ do: 'remove' }),
+  fc.constant({ do: 'reload' }),
+  fc.constant({ do: 'back' }),
+  fc.string({ maxLength: 200 }).map((q) =&gt; ({ do: 'search', q })),
+), { maxLength: 30 });
+
+test('任何操作順序下，購物車徽章都等於列表項數，且沒有錯誤', async ({ page }) =&gt; {
+  await fc.assert(fc.asyncProperty(actions, async (seq) =&gt; {
+    const errors: string[] = [];
+    page.removeAllListeners('pageerror');
+    page.on('pageerror', (e) =&gt; errors.push(e.message));
+    await page.goto('/shop');
+    for (const a of seq) {
+      if (a.do === 'add') await page.getByRole('button', { name: 'Add to cart' }).first().click();
+      if (a.do === 'remove') await page.getByRole('button', { name: 'Remove' }).first().click().catch(() =&gt; {});
+      if (a.do === 'reload') await page.reload();
+      if (a.do === 'back') await page.goBack().catch(() =&gt; {});
+      if (a.do === 'search') await page.getByRole('searchbox').fill(a.q);
+    }
+    await page.goto('/cart');
+    const badge = Number(await page.getByTestId('cart-badge').textContent());
+    const rows = await page.getByRole('listitem').count();
+    return errors.length === 0 &amp;&amp; badge === rows;
+  }), { numRuns: 50, seed: Number(process.env.SEED ?? Date.now()) });
+});</code></pre>
+</section>
+
+<section id="lint">
+  <h2><span class="num">06</span>Lint 護欄：禁用高風險寫法，錯誤訊息就是規則</h2>
+  <p class="sub">演講的兩個 UI 相關教訓：<code>useEffect</code> 需要「PhD 級直覺」，Agent 最不擅長，所以 Dune 只在框架底層使用、業務碼禁用；為了修閃爍塞進去的 1 個 <code>setTimeout</code>，五週後被複製成 183 個。兩者都寫成 Lint，而不是寫在 AGENTS.md。</p>
+<pre><code>// eslint.config.js（節錄，示意）
+const NO_EFFECT = '業務碼禁用 useEffect。資料請用 src/framework/hooks 的 useQuery；'
+  + '訂閱外部來源用 useSubscription；由事件觸發的邏輯直接寫在事件處理函式裡。';
+const NO_TIMER = '禁止用 setTimeout 修時序或畫面閃爍。請找出狀態更新的真正順序：'
+  + '需要等 DOM 就用 ref callback；需要等資料就用 loading 狀態；動畫用 CSS transition。';
+
+export default [
+  {
+    files: ['src/features/**/*.{ts,tsx}', 'src/pages/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', { paths: [
+        { name: 'react', importNames: ['useEffect', 'useLayoutEffect'], message: NO_EFFECT },
+      ] }],
+      'no-restricted-syntax': ['error',
+        { selector: "CallExpression[callee.property.name=/^use(Layout)?Effect$/]", message: NO_EFFECT },
+        { selector: "CallExpression[callee.name='setTimeout']", message: NO_TIMER },
+        { selector: "CallExpression[callee.property.name='setTimeout']", message: NO_TIMER },
+      ],
+    },
+  },
+  // src/framework/** 不套用：底層框架可以使用，並由少數人維護
+];</code></pre>
+  <div class="grid g2">
+    <div class="card small"><b>錯誤規則化的節奏</b>
+      <ol>
+        <li>糾正 Agent 的一個 UI 錯誤。</li>
+        <li>問：能用 Lint、型別、測試、依賴邊界擋住嗎？</li>
+        <li>能 → 請 Agent 寫規則，錯誤訊息附「正確寫法」，並<b>先在原本的錯誤程式碼上報紅</b>。</li>
+        <li>真的不能 → 才寫進 AGENTS.md。</li>
+        <li>同一個錯出現第二次才立規則（避免把隨口一次的糾正過度外推）。</li>
+      </ol>
+    </div>
+    <div class="card small"><b>UI 類常見可規則化項目</b>
+      <ul>
+        <li>業務碼的 <code>useEffect</code>／<code>setTimeout</code>／<code>setInterval</code></li>
+        <li>直接操作 DOM（<code>document.querySelector</code>）</li>
+        <li>互動元素缺少無障礙名稱（同時讓 <code>getByRole</code> 找得到）</li>
+        <li>renderer 引入 main 進程模組（依賴圖邊界）</li>
+        <li>辯護型註解：「暫時」「workaround」「先這樣」</li>
+        <li>新增 UI 檔案但沒有對應的 <code>flows/*.json</code>（自訂腳本檢查）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="pager"><a href="roadmap.html"><small>← 上一頁</small>優化步驟</a></div>
+</main>
+<footer><div class="wrap">資料來源：<br>
+・<a href="https://zhuanlan.zhihu.com/p/2104561652888876670">Grok Bot 工程師土豆姐：所有程式碼都是垃圾（我的除外）— Ai學習的老章，知乎，2026-11-13</a><br>
+・<a href="https://mp.weixin.qq.com/s/7I8p5lG4q1swF09ELF1jGw">Grok 土豆姐的 Agent 實戰經驗，這套 Harness 已開源！— Ai學習的老章，微信，2026-11-08</a><br>
+・<a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins · pstack（MIT），commit e58dd04，2026-11-19</a><br>
+原始演講：Lauren Tan (poteto)《All Code Is Slop (Except Mine)》，AI Engineer Code Summit。本頁的程式與設定為本站依上述內容撰寫的示意，非原作者提供。</div></footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

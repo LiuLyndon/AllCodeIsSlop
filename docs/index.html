@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg on" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a></div></div>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg on" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a><a class="pg" href="ui-verify.html">UI 驗證實作</a></div></div>
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">Grok Bot · Lauren Tan (poteto) · 整理總覽</div>
@@ -27,13 +27,14 @@
   <div class="quote">一句話：與其往 AGENTS.md 加規則或靠人工 review 兜底，不如把教訓焊進架構、型別與 Lint，並讓 Agent 自己跑驗證、交出證據。</div>
 
   <h2 style="margin-top:32px">分頁導覽</h2>
-  <p class="sub">建議閱讀順序：人物與信任 → 演講重點 → 14 條清單 → pstack → 優化步驟。</p>
+  <p class="sub">建議閱讀順序：人物與信任 → 演講重點 → 14 條清單 → pstack → 優化步驟 → UI 驗證實作。</p>
   <div class="grid g2">
     <a class="card hub" href="lauren.html"><span class="hn">01</span><b>人物與信任</b><p>非 CS 出身的成長路徑、信任曲線（為什麼不能從 5 個 Agent 直接跳到 100 個）、從 Benny 到 Grok Bot。</p></a>
     <a class="card hub" href="talk.html"><span class="hn">02</span><b>演講重點</b><p>Poteto 信任倒金字塔、Dune 框架、183 個計時器的教訓、註解砍 98%、Feature Map 與 TLA+、生產成績單與效能表。</p></a>
     <a class="card hub" href="tibo-14.html"><span class="hn">03</span><b>14 條工程清單</b><p>tibo.dog 4 天 1,150 PR 的推文重點依主題歸納，對應背後的 pstack 原則與可借用做法。</p></a>
     <a class="card hub" href="pstack.html"><span class="hn">04</span><b>pstack 開源 Harness</b><p>GitHub 位置、安裝、34 個技能、22 套劇本、24 條原則、2 個子 Agent，以及文章與 repo 現況差異。</p></a>
     <a class="card hub" href="roadmap.html"><span class="hn">05</span><b>優化步驟</b><p>Phase 0–7 可勾選的落地路線圖，加上適用邊界與「不要做的事」。</p></a>
+    <a class="card hub" href="ui-verify.html"><span class="hn">06</span><b>UI 驗證實作</b><p>網頁 / UI 改動的完整流程：讓代理真的開瀏覽器操作、修前修後對照證據、獨立盲測、UI 屬性測試、useEffect / setTimeout Lint 護欄，附範例程式。</p></a>
   </div>
 
   <h2 style="margin-top:36px">主題索引：每個主題只在一處詳述</h2>
@@ -49,6 +50,7 @@
       <tr><td>Feature Map、TLA+、Lean、70% Token</td><td><a href="talk.html#verify">演講 › 驗證體系</a></td><td>pstack › ④ 一句話糾偏</td><td>知乎・GitHub</td></tr>
       <tr><td>tibo.dog 14 條</td><td><a href="tibo-14.html">14 條清單</a></td><td>pstack › 運作方式</td><td>X 推文・微信</td></tr>
       <tr><td>pstack 安裝、架構、技能、劇本、原則</td><td><a href="pstack.html">pstack</a></td><td>優化 Phase 1</td><td>微信・GitHub</td></tr>
+      <tr><td>UI 驗證流程、瀏覽器實跑、盲測、UI 屬性測試、UI Lint 範例</td><td><a href="ui-verify.html">UI 驗證實作</a></td><td>演講 › 驗證體系、pstack › 獨立驗收、優化 Phase 4–6</td><td>綜合＋本站範例</td></tr>
       <tr><td>可執行步驟（含 Mai Yang 的實作建議）</td><td><a href="roadmap.html">優化步驟</a></td><td>人物 › 個人習慣</td><td>綜合</td></tr>
     </tbody>
   </table>

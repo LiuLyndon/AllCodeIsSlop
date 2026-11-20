@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg on" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a></div></div>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg on" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a><a class="pg" href="ui-verify.html">UI 驗證實作</a></div></div>
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow">github.com/cursor/plugins · pstack · MIT</div>
@@ -387,6 +387,7 @@
     </svg>
     <figcaption>依 pstack <code>playbooks/shipping.md</code> 重新繪製：寫碼的 Agent 不得自己驗收，verdict 必須來自沒寫這段程式的 Agent。</figcaption>
   </figure>
+  <p class="small muted">用在 UI 時，可再進一步讓驗收 Agent 當「一般使用者」：不給 diff、不給寫碼過程，只給 Feature Map 與改動描述，並要求它刻意亂操作。提示詞範本見 <a href="ui-verify.html#blind">UI 驗證實作 › 獨立盲測</a>。</p>
 </section>
 <section id="structure">
   <h2><span class="num">03</span>核心心法：別再往 CLAUDE.md 塞規則</h2>
