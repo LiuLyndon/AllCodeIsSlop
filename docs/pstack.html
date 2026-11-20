@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pstack 開源 Harness</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg on" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a></div></div>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">github.com/cursor/plugins · pstack · MIT</div>
+    <h1>pstack<small>if you want to go fast, go deep first</small></h1>
+    <p class="lede">作者每天在 Cursor 使用的同一套技能：58 個 Skills（34 功能 + 24 原則）、22 套劇本、2 個子 Agent，Cursor 與 Claude Code 皆可安裝。</p>
+    <nav class="toc"><div class="wrap"><a href="#repo">GitHub 位置</a><a href="#install">安裝</a><a href="#pstack">運作方式</a><a href="#structure">結構優先</a><a href="#skills">34 技能</a><a href="#playbooks">22 劇本</a><a href="#principles">24 原則</a><a href="#agents">子 Agent</a><a href="#diff">文章 vs repo</a></div></nav>
+  </div>
+</header>
+<main class="wrap">
+<section id="repo">
+  <h2><span class="num">00</span>GitHub 上的 pstack 在哪裡？</h2>
+  <p class="sub">有，作者把它開源在 Cursor 官方插件倉庫，MIT 授權。以下內容依 repo 最新 commit（<code>e58dd04</code>，2026-11-19）整理。</p>
+  <div class="grid g2">
+    <div class="card">
+      <b>主要位置</b>
+      <ul class="small">
+        <li>原始碼：<a href="https://github.com/cursor/plugins/tree/main/pstack">github.com/cursor/plugins/tree/main/pstack</a></li>
+        <li>Claude Code 版（自動產生的副本）：<a href="https://github.com/cursor/plugins/tree/main/harness/pstack">harness/pstack</a></li>
+        <li>新手指南（10 章）：<a href="https://github.com/cursor/plugins/tree/main/pstack/docs/guide">pstack/docs/guide</a></li>
+        <li>Claude Code 名稱對照：<a href="https://github.com/cursor/plugins/blob/main/pstack/docs/harness/claude-code.md">docs/harness/claude-code.md</a></li>
+        <li>作者：Lauren Tan（<a href="https://x.com/poteto">@poteto</a>）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <b>資料夾結構</b>
+<pre><code>pstack/
+├─ skills/          58 個技能（34 功能 + 24 原則）
+│  └─ poteto-mode/playbooks/   22 套劇本
+├─ agents/          poteto-agent.md、comment-sicko.md
+├─ automations/benny/   Slack 問題分流 + 自動重現修復（僅 Cursor）
+├─ docs/guide/      01–10 章新手指南
+├─ docs/harness/    claude-code.md 對照表
+└─ plugin.json</code></pre>
+    </div>
+  </div>
+  <div class="quote">作者自述：i don't want to ship like a team of twenty slop artists. throughput without quality is not a goal i aspire to. —— 想跑得快，先扎得深（if you want to go fast, go deep first）。pstack 的目標不是多寫程式，而是<b>寫更少、但更高品質</b>的程式，進而能放心並行，拒絕「20 個垃圾製造機同時狂飆」的假吞吐。</div>
+</section>
+
+<section id="install">
+  <h2><span class="num">01</span>安裝與兩步上手</h2>
+  <div class="grid g2">
+    <div class="card">
+      <b>Cursor</b>
+<pre><code>/add-plugin pstack</code></pre>
+      <b>Claude Code</b>
+<pre><code>/plugin marketplace add cursor/plugins
+/plugin install pstack@cursor-plugins
+/pstack:setup-pstack</code></pre>
+      <ul class="small">
+        <li>Claude Code 的指令都要加前綴：<code>/poteto-mode</code> → <code>/pstack:poteto-mode</code></li>
+        <li>模型設定寫入 <code>~/.claude/rules/pstack-models.md</code></li>
+        <li>第三方 marketplace 預設<b>不自動更新</b>：<code>/plugin</code> → marketplaces → <code>cursor-plugins</code> → enable auto-update；或手動 <code>claude plugin update pstack@cursor-plugins</code></li>
+        <li>需要 Cursor 專屬功能（Bugbot、automations）的步驟會被跳過並註明</li>
+      </ul>
+    </div>
+    <div class="card">
+      <b>官方建議：只要兩步</b>
+      <ol>
+        <li>跑 <code>/setup-pstack</code>，選推理預算與各角色要用的模型</li>
+        <li>任何需要嚴謹度的工作都用 <code>/poteto-mode</code> 開頭</li>
+      </ol>
+      <p class="small">不知道該用哪個技能？輸入 <code>/poteto-help</code>，它會回答並給你一段可直接送出的 prompt（不會自己開工，因為跑 pstack 會花真的 Token）。</p>
+      <p class="small"><b>只記一件事：</b>給 Agent 一個目標＋檢查方式，用你自己的話說。寫法與範例見下方〈單一入口 /poteto-mode〉。</p>
+    </div>
+  </div>
+</section>
+
+<section id="pstack">
+  <h2><span class="num">02</span>怎麼運作：從一句話到合入</h2>
+  <p class="sub">位於 Cursor 官方插件庫 <code>cursor/plugins/tree/main/pstack</code>：58 個 Skills（34 功能 + 24 原則）、23 套劇本、2 個子 Agent（poteto-agent、comment-sicko），附 <code>harness/pstack/</code> 適配層，Cursor 與 Claude Code 皆可用。</p>
+  <p class="sub">先讓單一 Agent 寫得少、寫得精、能自證，再談並行。實戰案例：tibo.dog 4 天約 1,150 個 PR，被稱為 pstack 的 96 小時公開壓測（見 <a href="tibo-14.html">14 條清單</a>）。</p>
+
+  <h3>pstack 全景架構</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 390" role="img" aria-label="pstack 全景架構：你的需求進入 poteto-mode，選出劇本，呼叫 34 個功能技能並遵守 24 條原則，產出窄 PR 與證據；旁邊是子 Agent、模型設定與平台">
+      <defs><marker id="r1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah"/></marker></defs>
+      <rect x="140" y="12" width="300" height="40" rx="20" class="box"/>
+      <text x="290" y="37" text-anchor="middle" class="t-s" font-weight="700">你：目標＋完成標準＋要看的證據</text>
+      <line x1="290" y1="54" x2="290" y2="70" class="ln" marker-end="url(#r1)"/>
+      <rect x="20" y="74" width="540" height="50" rx="12" class="f-acc"/>
+      <text x="290" y="97" text-anchor="middle" class="t-l on">/poteto-mode　單一入口</text>
+      <text x="290" y="116" text-anchor="middle" class="t-s on">主對話擁有劇本、待辦清單與所有子 Agent</text>
+      <line x1="290" y1="126" x2="290" y2="140" class="ln" marker-end="url(#r1)"/>
+      <rect x="20" y="144" width="540" height="40" rx="10" class="box"/>
+      <text x="290" y="169" text-anchor="middle" class="t-s"><tspan font-weight="700">22 套劇本</tspan>　bug fix・feature・perf・shipping・autonomous run…</text>
+      <line x1="290" y1="186" x2="290" y2="200" class="ln" marker-end="url(#r1)"/>
+      <text x="20" y="198" class="t-s mut">步驟觸發時呼叫</text>
+      <rect x="20" y="204" width="85" height="56" rx="10" class="box"/><text x="62" y="228" text-anchor="middle" class="t-s" font-weight="700">入口輔助</text><text x="62" y="248" text-anchor="middle" class="t-s mut">5</text>
+      <rect x="111" y="204" width="85" height="56" rx="10" class="box"/><text x="153" y="228" text-anchor="middle" class="t-s" font-weight="700">理解</text><text x="153" y="248" text-anchor="middle" class="t-s mut">4</text>
+      <rect x="202" y="204" width="85" height="56" rx="10" class="box"/><text x="244" y="228" text-anchor="middle" class="t-s" font-weight="700">設計審查</text><text x="244" y="248" text-anchor="middle" class="t-s mut">6</text>
+      <rect x="293" y="204" width="85" height="56" rx="10" class="box"/><text x="335" y="228" text-anchor="middle" class="t-s" font-weight="700">建構清理</text><text x="335" y="248" text-anchor="middle" class="t-s mut">5</text>
+      <rect x="384" y="204" width="85" height="56" rx="10" class="box"/><text x="426" y="228" text-anchor="middle" class="t-s" font-weight="700">驗證</text><text x="426" y="248" text-anchor="middle" class="t-s mut">6</text>
+      <rect x="475" y="204" width="85" height="56" rx="10" class="box"/><text x="517" y="228" text-anchor="middle" class="t-s" font-weight="700">追蹤自訂</text><text x="517" y="248" text-anchor="middle" class="t-s mut">8</text>
+      <text x="560" y="276" text-anchor="end" class="t-s mut">= 34 個功能技能</text>
+      <rect x="20" y="284" width="540" height="40" rx="10" class="f-b3"/>
+      <text x="290" y="309" text-anchor="middle" class="t-s on"><tspan font-weight="700">24 條原則</tspan>　每一步都依原則執行，名稱即糾偏口令</text>
+      <line x1="290" y1="326" x2="290" y2="340" class="ln" marker-end="url(#r1)"/>
+      <rect x="20" y="344" width="540" height="40" rx="10" class="box-good"/>
+      <text x="290" y="369" text-anchor="middle" class="t-s good" font-weight="700">產出：窄 PR 棧＋實跑證據 → 獨立驗收 → 由底向上合入</text>
+
+      <line x1="562" y1="99" x2="580" y2="99" class="ln" stroke-dasharray="4 4"/>
+      <rect x="580" y="74" width="168" height="112" rx="12" class="box"/>
+      <text x="594" y="98" class="t-s acc" font-weight="700">2 個子 Agent</text>
+      <text x="594" y="122" class="t-s mono" font-weight="700">poteto-agent</text>
+      <text x="594" y="140" class="t-s mut">代理人，開工先讀規則</text>
+      <text x="594" y="162" class="t-s mono" font-weight="700">comment-sicko</text>
+      <text x="594" y="178" class="t-s mut">唯讀的註解審查員</text>
+      <rect x="580" y="198" width="168" height="72" rx="12" class="box"/>
+      <text x="594" y="222" class="t-s acc" font-weight="700">模型設定</text>
+      <text x="594" y="242" class="t-s mono">/setup-pstack</text>
+      <text x="594" y="260" class="t-s mut">依角色指派模型</text>
+      <rect x="580" y="282" width="168" height="102" rx="12" class="box"/>
+      <text x="594" y="306" class="t-s acc" font-weight="700">平台</text>
+      <text x="594" y="328" class="t-s">Cursor：/add-plugin</text>
+      <text x="594" y="350" class="t-s">Claude Code：</text>
+      <text x="594" y="370" class="t-s mut">harness/pstack 自動產生</text>
+    </svg>
+    <figcaption>重新繪製自原文「pstack 全景架構」，各數量與分組依 GitHub repo（2026-11-19）。技能分組為本頁的整理方式，非官方分類。</figcaption>
+  </figure>
+
+  <h3>單一入口 <code>/poteto-mode</code>：只講目標與驗收，不微操過程</h3>
+  <p>派工只寫三件事：<b>目標</b>、<b>完成判定標準</b>、<b>要看的實跑證據</b>。</p>
+<pre><code>/poteto-mode 匯出介面重試時會寫入重複行，先重現再修，拿出前後行對比證據</code></pre>
+  <ol class="small">
+    <li>先用白話複述要解決的問題與最小改動範圍 —— 理解偏了第一輪就能糾正。</li>
+    <li>從劇本庫（文章寫 23 套，repo 現為 22 套：調研、修 Bug、新功能、效能分析、指標爬坡、合 PR…）挑一套抄進待辦，跳過的步驟寫明 <code>skip: 原因</code>。</li>
+    <li>Cursor 中按 Alt+Enter（Mac：Option+Enter）可鎖成常駐 Custom Mode。</li>
+  </ol>
+  <figure class="fig">
+    <svg viewBox="0 0 760 280" role="img" aria-label="/poteto-mode 路由：一句話需求進入 poteto-mode，白話複述後選出劇本，步驟抄進待辦清單並依序呼叫技能，最後交出證據">
+      <defs><marker id="m3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah"/></marker></defs>
+      <rect x="10" y="70" width="168" height="140" rx="12" class="box"/>
+      <text x="26" y="98" class="t-m" font-weight="700">你的一句話</text>
+      <text x="26" y="128" class="t-s">● 目標</text>
+      <text x="26" y="152" class="t-s">● 完成判定標準</text>
+      <text x="26" y="176" class="t-s">● 要看的實跑證據</text>
+      <text x="26" y="200" class="t-s mut">不必指定技能名</text>
+      <line x1="180" y1="140" x2="206" y2="140" class="ln" marker-end="url(#m3)"/>
+      <rect x="210" y="104" width="134" height="72" rx="12" class="f-acc"/>
+      <text x="277" y="136" text-anchor="middle" class="t-l on">/poteto-mode</text>
+      <text x="277" y="158" text-anchor="middle" class="t-s on">白話複述＋最小範圍</text>
+      <text x="277" y="40" text-anchor="middle" class="t-s mut">理解偏了，第一輪就能糾正</text>
+      <line x1="277" y1="48" x2="277" y2="100" class="ln" stroke-dasharray="3 4"/>
+      <path d="M344,140 L372,50" class="ln"/><path d="M344,140 L372,95" class="ln"/>
+      <path d="M344,140 L372,140" class="ln-acc"/><path d="M344,140 L372,185" class="ln"/><path d="M344,140 L372,230" class="ln"/>
+      <rect x="374" y="34" width="132" height="32" rx="8" class="box-mut"/><text x="440" y="55" text-anchor="middle" class="t-s mut">investigation</text>
+      <rect x="374" y="79" width="132" height="32" rx="8" class="box-mut"/><text x="440" y="100" text-anchor="middle" class="t-s mut">feature</text>
+      <rect x="374" y="124" width="132" height="32" rx="8" class="box-acc"/><text x="440" y="145" text-anchor="middle" class="t-s acc" font-weight="700">bug fix ✓</text>
+      <rect x="374" y="169" width="132" height="32" rx="8" class="box-mut"/><text x="440" y="190" text-anchor="middle" class="t-s mut">perf</text>
+      <rect x="374" y="214" width="132" height="32" rx="8" class="box-mut"/><text x="440" y="235" text-anchor="middle" class="t-s mut">…共 22 套</text>
+      <line x1="508" y1="140" x2="534" y2="140" class="ln-acc" marker-end="url(#m3)"/>
+      <rect x="538" y="44" width="212" height="192" rx="12" class="box"/>
+      <text x="554" y="72" class="t-m" font-weight="700">待辦清單（原樣抄入）</text>
+      <text x="554" y="102" class="t-s">☐ 重現缺陷</text>
+      <text x="554" y="126" class="t-s">☐ 追到根因</text>
+      <text x="554" y="150" class="t-s">☐ 修復（必要時 /tdd）</text>
+      <text x="554" y="174" class="t-s">☐ 附執行期證據</text>
+      <text x="554" y="198" class="t-s mut">☐ skip: 原因（若跳過）</text>
+      <text x="554" y="222" class="t-s">☐ opening a pr</text>
+      <text x="380" y="272" text-anchor="middle" class="t-s mut">每一步觸發時才呼叫對應技能（why、architect、interrogate、no-comments…）與原則</text>
+    </svg>
+    <figcaption>以「bug fix」劇本為例；劇本名稱來自 pstack README。</figcaption>
+  </figure>
+
+  <h3>四大高頻武器庫</h3>
+  <p class="small">文章把常用技能分成四組：① 動手前摸底、② 關鍵設計不拿初稿湊合、③ 過夜任務有審計帳、④ 一句話糾偏。前三組各有流程圖如下；第四組見本節最後。</p>
+
+  <h3>① 動手前先摸底：/how 查運行鏈路、/why 查歷史動機</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 280" role="img" aria-label="/how 用唯讀子 Agent 探索程式碼並產出架構說明；/why 讀 commit 與 PR 討論，產出附引用的決策脈絡">
+      <defs><marker id="r2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah"/></marker></defs>
+      <rect x="12" y="95" width="130" height="70" rx="12" class="box-acc"/>
+      <text x="77" y="124" text-anchor="middle" class="t-m" font-weight="700">動手改之前</text>
+      <text x="77" y="146" text-anchor="middle" class="t-s mut">先搞懂</text>
+      <path d="M144,118 C160,118 160,65 176,65" class="ln" marker-end="url(#r2)"/>
+      <path d="M144,142 C160,142 160,195 176,195" class="ln" marker-end="url(#r2)"/>
+
+      <rect x="180" y="20" width="140" height="90" rx="12" class="f-b3"/>
+      <text x="250" y="56" text-anchor="middle" class="t-xl on">/how</text>
+      <text x="250" y="82" text-anchor="middle" class="t-s on">它怎麼運作？</text>
+      <line x1="322" y1="65" x2="350" y2="65" class="ln" marker-end="url(#r2)"/>
+      <rect x="354" y="20" width="190" height="90" rx="12" class="box"/>
+      <text x="368" y="46" class="t-s" font-weight="700">唯讀子 Agent 探索程式碼</text>
+      <text x="368" y="70" class="t-s mut">呼叫鏈、核心型別、模組</text>
+      <text x="368" y="90" class="t-s mut">放哪一層、誰擁有</text>
+      <line x1="546" y1="65" x2="574" y2="65" class="ln" marker-end="url(#r2)"/>
+      <rect x="578" y="20" width="170" height="90" rx="12" class="box-good"/>
+      <text x="592" y="46" class="t-s good" font-weight="700">架構說明</text>
+      <text x="592" y="70" class="t-s">讓不熟的資深工程師</text>
+      <text x="592" y="90" class="t-s">建立心智模型</text>
+
+      <rect x="180" y="150" width="140" height="90" rx="12" class="f-b5"/>
+      <text x="250" y="186" text-anchor="middle" class="t-xl on">/why</text>
+      <text x="250" y="212" text-anchor="middle" class="t-s on">為什麼這樣寫？</text>
+      <line x1="322" y1="195" x2="350" y2="195" class="ln" marker-end="url(#r2)"/>
+      <rect x="354" y="150" width="190" height="90" rx="12" class="box"/>
+      <text x="368" y="176" class="t-s" font-weight="700">讀紀錄，不讀程式碼</text>
+      <text x="368" y="200" class="t-s mut">引入它的 commit、PR 討論</text>
+      <text x="368" y="220" class="t-s mut">之後每次修改與其他來源</text>
+      <line x1="546" y1="195" x2="574" y2="195" class="ln" marker-end="url(#r2)"/>
+      <rect x="578" y="150" width="170" height="90" rx="12" class="box-good"/>
+      <text x="592" y="176" class="t-s good" font-weight="700">附引用的脈絡</text>
+      <text x="592" y="200" class="t-s">引用作者原話、標出推論</text>
+      <text x="592" y="220" class="t-s">說明紀錄沒回答的部分</text>
+      <text x="380" y="268" text-anchor="middle" class="t-s mut"><tspan class="acc" font-weight="700">/teach</tspan> = how＋why 一張張圖解；<tspan class="acc" font-weight="700">/recall</tspan> 從你的對話記錄找回前幾天的上下文</text>
+    </svg>
+    <figcaption>依 pstack <code>skills/how</code> 與 <code>skills/why</code> 繪製。原文提到 /why 也會翻 Issue、團隊聊天與 Sentry；repo 的說法是「紀錄不足時再找其他來源」。</figcaption>
+  </figure>
+
+  <h3>② 關鍵設計不拿初稿湊合：/architect、/arena、/interrogate</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 380" role="img" aria-label="三種設計與審查技能的流程：architect 先畫兩種形狀再選；arena 多模型並行、異廠商裁判、選底座、嫁接、驗證；interrogate 讓對手實跑證明問題">
+      <defs><marker id="r3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah"/></marker></defs>
+      <rect x="12" y="20" width="130" height="100" rx="12" class="f-b1"/>
+      <text x="77" y="62" text-anchor="middle" class="t-l on">/architect</text>
+      <text x="77" y="86" text-anchor="middle" class="t-s on">寫碼前先定形狀</text>
+      <rect x="160" y="32" width="180" height="76" rx="10" class="box"/>
+      <text x="174" y="62" class="t-s" font-weight="700">追蹤這次改動會</text><text x="174" y="82" class="t-s" font-weight="700">碰到的所有系統</text>
+      <line x1="342" y1="70" x2="358" y2="70" class="ln" marker-end="url(#r3)"/>
+      <rect x="362" y="32" width="180" height="76" rx="10" class="box"/>
+      <text x="376" y="58" class="t-s" font-weight="700">畫兩種不同形狀</text>
+      <text x="376" y="80" class="t-s mut">型別・簽章・模組邊界</text>
+      <line x1="544" y1="70" x2="560" y2="70" class="ln" marker-end="url(#r3)"/>
+      <rect x="564" y="32" width="184" height="76" rx="10" class="box-good"/>
+      <text x="578" y="54" class="t-s good" font-weight="700">選擇的標準</text>
+      <text x="578" y="74" class="t-s">狀態單一擁有者・單一做法</text>
+      <text x="578" y="94" class="t-s">呼叫方需要知道的最少</text>
+
+      <rect x="12" y="140" width="130" height="100" rx="12" class="f-b2"/>
+      <text x="77" y="182" text-anchor="middle" class="t-l on">/arena</text>
+      <text x="77" y="206" text-anchor="middle" class="t-s on">多稿競技</text>
+      <rect x="160" y="152" width="90" height="76" rx="10" class="box"/><text x="205" y="176" text-anchor="middle" class="t-s" font-weight="700">Frame</text><text x="205" y="196" text-anchor="middle" class="t-s mut">同一題目</text><text x="205" y="214" text-anchor="middle" class="t-s mut">3–6 條標準</text>
+      <line x1="251" y1="190" x2="257" y2="190" class="ln" marker-end="url(#r3)"/>
+      <rect x="259" y="152" width="90" height="76" rx="10" class="box"/><text x="304" y="176" text-anchor="middle" class="t-s" font-weight="700">Fan out</text><text x="304" y="196" text-anchor="middle" class="t-s mut">N 個模型</text><text x="304" y="214" text-anchor="middle" class="t-s mut">各自 worktree</text>
+      <line x1="350" y1="190" x2="356" y2="190" class="ln" marker-end="url(#r3)"/>
+      <rect x="358" y="152" width="90" height="76" rx="10" class="box"/><text x="403" y="176" text-anchor="middle" class="t-s" font-weight="700">Judge</text><text x="403" y="196" text-anchor="middle" class="t-s mut">異廠商</text><text x="403" y="214" text-anchor="middle" class="t-s mut">交叉裁判</text>
+      <line x1="449" y1="190" x2="455" y2="190" class="ln" marker-end="url(#r3)"/>
+      <rect x="457" y="152" width="90" height="76" rx="10" class="box"/><text x="502" y="176" text-anchor="middle" class="t-s" font-weight="700">Pick</text><text x="502" y="196" text-anchor="middle" class="t-s mut">逐條評分</text><text x="502" y="214" text-anchor="middle" class="t-s mut">選底座</text>
+      <line x1="548" y1="190" x2="554" y2="190" class="ln" marker-end="url(#r3)"/>
+      <rect x="556" y="152" width="90" height="76" rx="10" class="box"/><text x="601" y="176" text-anchor="middle" class="t-s" font-weight="700">Graft</text><text x="601" y="196" text-anchor="middle" class="t-s mut">手動嫁接</text><text x="601" y="214" text-anchor="middle" class="t-s mut">落選亮點</text>
+      <line x1="647" y1="190" x2="653" y2="190" class="ln" marker-end="url(#r3)"/>
+      <rect x="655" y="152" width="93" height="76" rx="10" class="box-good"/><text x="701" y="176" text-anchor="middle" class="t-s good" font-weight="700">Verify</text><text x="701" y="196" text-anchor="middle" class="t-s mut">實跑驗證</text><text x="701" y="214" text-anchor="middle" class="t-s mut">合成結果</text>
+
+      <rect x="12" y="260" width="130" height="100" rx="12" class="f-fail"/>
+      <text x="77" y="302" text-anchor="middle" class="t-l on">/interrogate</text>
+      <text x="77" y="326" text-anchor="middle" class="t-s on">對抗審查</text>
+      <rect x="160" y="272" width="138" height="76" rx="10" class="box"/><text x="174" y="300" class="t-s" font-weight="700">寫下意圖</text><text x="174" y="322" class="t-s mut">先確認要守住什麼</text>
+      <line x1="299" y1="310" x2="307" y2="310" class="ln" marker-end="url(#r3)"/>
+      <rect x="309" y="272" width="138" height="76" rx="10" class="box"/><text x="323" y="300" class="t-s" font-weight="700">多個對手模型</text><text x="323" y="322" class="t-s mut">各自 worktree 弄壞它</text>
+      <line x1="448" y1="310" x2="456" y2="310" class="ln" marker-end="url(#r3)"/>
+      <rect x="458" y="272" width="138" height="76" rx="10" class="box-bad"/><text x="472" y="300" class="t-s bad" font-weight="700">每個發現必附</text><text x="472" y="322" class="t-s">指令＋實際輸出</text>
+      <line x1="597" y1="310" x2="605" y2="310" class="ln" marker-end="url(#r3)"/>
+      <rect x="607" y="272" width="141" height="76" rx="10" class="box-good"/><text x="621" y="300" class="t-s good" font-weight="700">重跑驗證</text><text x="621" y="322" class="t-s">只留被證實的</text><text x="621" y="340" class="t-s mut">嘴砲建議全踢掉</text>
+    </svg>
+    <figcaption>依 pstack <code>skills/architect</code>、<code>skills/arena</code>（Phase A–F）與 <code>skills/interrogate</code> 繪製。大型或有爭議的設計，/architect 會改用 /arena。/interrogate 只回報、不修。</figcaption>
+  </figure>
+
+  <h3>③ 過夜跑任務也有審計帳：/loop ＋ decisions.tsv</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 330" role="img" aria-label="過夜執行流程：睡前定義退出條件並設定 loop 喚醒；每輪最小改動、驗證、有進展才 commit 否則丟棄、寫入 decisions.tsv；早上用 show-me-your-work 稽核">
+      <defs><marker id="r4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah"/></marker>
+        <marker id="r4a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah-acc"/></marker></defs>
+      <text x="97" y="18" text-anchor="middle" class="t-s acc" font-weight="800">睡前</text>
+      <rect x="12" y="28" width="170" height="108" rx="12" class="box"/>
+      <text x="26" y="52" class="t-s" font-weight="700">① 定義退出條件</text>
+      <text x="26" y="76" class="t-s mut">可檢查的判定，例如：</text>
+      <text x="26" y="96" class="t-s mut">測試全綠・N 個 PR 合併</text>
+      <text x="26" y="116" class="t-s mut">pixel-diff 為 0</text>
+      <rect x="12" y="150" width="170" height="108" rx="12" class="box"/>
+      <text x="26" y="174" class="t-s" font-weight="700">② 設定 /loop 喚醒</text>
+      <text x="26" y="198" class="t-s mut">有事件：watcher 子 Agent</text>
+      <text x="26" y="218" class="t-s mut">（CI、合併）＋長心跳備援</text>
+      <text x="26" y="238" class="t-s mut">無事件：固定間隔心跳</text>
+      <line x1="184" y1="140" x2="214" y2="140" class="ln-acc" marker-end="url(#r4a)"/>
+
+      <text x="385" y="18" text-anchor="middle" class="t-s acc" font-weight="800">每一輪</text>
+      <rect x="305" y="28" width="160" height="44" rx="10" class="box"/><text x="385" y="55" text-anchor="middle" class="t-s" font-weight="700">做最小的改動</text>
+      <rect x="400" y="118" width="150" height="44" rx="10" class="box"/><text x="475" y="145" text-anchor="middle" class="t-s" font-weight="700">對照判定驗證</text>
+      <rect x="295" y="208" width="180" height="50" rx="10" class="box-acc"/><text x="385" y="230" text-anchor="middle" class="t-s" font-weight="700">有進展 → commit</text><text x="385" y="249" text-anchor="middle" class="t-s bad">沒幫助 → 丟棄</text>
+      <rect x="218" y="118" width="160" height="44" rx="10" class="box"/><text x="298" y="138" text-anchor="middle" class="t-s mono" font-weight="700">decisions.tsv</text><text x="298" y="155" text-anchor="middle" class="t-s mut">記一列</text>
+      <path d="M465,52 C500,52 475,80 475,114" class="ln" marker-end="url(#r4)"/>
+      <path d="M475,164 C475,190 440,206 440,206" class="ln" marker-end="url(#r4)"/>
+      <path d="M320,206 C298,190 298,180 298,166" class="ln" marker-end="url(#r4)"/>
+      <path d="M298,116 C298,80 270,52 302,52" class="ln" marker-end="url(#r4)"/>
+      <text x="385" y="286" text-anchor="middle" class="t-s">達到判定才停；卡在高原 ≠ 停止，換方法</text>
+      <text x="385" y="306" text-anchor="middle" class="t-s bad" font-weight="700">絕不放寬判定來宣告勝利</text>
+      <line x1="556" y1="140" x2="576" y2="140" class="ln-acc" marker-end="url(#r4a)"/>
+
+      <text x="664" y="18" text-anchor="middle" class="t-s acc" font-weight="800">早上</text>
+      <rect x="580" y="28" width="168" height="290" rx="12" class="box-good"/>
+      <text x="594" y="54" class="t-s mono" font-weight="700">/show-me-your-work</text>
+      <text x="594" y="82" class="t-s">• 對照對話記錄</text>
+      <text x="594" y="100" class="t-s mut">　稽核每一列</text>
+      <text x="594" y="124" class="t-s">• 證據必須打得開</text>
+      <text x="594" y="148" class="t-s">• 漏記的轉折要補列</text>
+      <text x="594" y="172" class="t-s">• 只追加、不改歷史</text>
+      <text x="594" y="196" class="t-s">• 換廠商的模型複盤</text>
+      <text x="594" y="214" class="t-s mut">　標出高風險決策</text>
+      <line x1="594" y1="234" x2="734" y2="234" stroke="var(--border)"/>
+      <text x="594" y="258" class="t-s mono" font-weight="700">/ketchup</text>
+      <text x="594" y="278" class="t-s mut">白話速覽＋待你決定的事</text>
+      <text x="594" y="300" class="t-s mut">/ketchup-video 字幕影片</text>
+    </svg>
+    <figcaption>依 pstack 的 autonomous run 劇本與 <code>skills/show-me-your-work</code> 繪製。</figcaption>
+  </figure>
+  <p class="small"><b>decisions.tsv 長什麼樣子</b>（欄位依 pstack 範本，內容為中文示意）：</p>
+  <div class="tscroll">
+  <table class="tbl small">
+    <thead><tr><th>ts</th><th>phase</th><th>decision</th><th>why</th><th>evidence</th><th>result</th></tr></thead>
+    <tbody>
+      <tr><td>09:02</td><td>frame</td><td>先盤點工作量：約 100 個元件</td><td>長跑前先知道規模</td><td>commit 3a9f1c2</td><td>找出 5 件要先處理的事</td></tr>
+      <tr><td>09:40</td><td>harness</td><td>改動前先拍舊版截圖</td><td>新舊比對抓視覺變化</td><td>baseline/</td><td>存下 120 張基準圖</td></tr>
+      <tr><td>12:30</td><td>widget</td><td>丟棄某個子 Agent 的成果</td><td>它的截圖是空白的</td><td>worktree reset</td><td>reverted，收緊指示</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="small muted">規則：一列一個決策；證據是指標（SHA、PR 號、檔案路徑），不是一段文字；預設不提交 git，審查者需要時才提交。</p>
+
+  <h3>④ 一句話糾偏＋TLA+ 兜底</h3>
+  <p class="small">24 條原則都有固定的英文名稱，Agent 跑偏時直接說名字即可：亂疊相容層 → <code>subtract before you add</code>；只拿「編譯通過」交差 → <code>prove it works</code>。完整列表見 <a href="#principles">24 條原則</a>。並發與狀態機死角則用 <code>/create-formal-verification-skill</code> 加 <code>/statechart</code>，流程圖見 <a href="talk.html#verify">演講重點 › 驗證體系</a>。</p>
+
+  <h3>日合百個 PR 不崩的底層機制</h3>
+  <div class="tscroll">
+  <table class="tbl">
+    <thead><tr><th>機制</th><th>解決的痛點</th><th>pstack 的硬規定</th></tr></thead>
+    <tbody>
+      <tr><td><b>異質模型分工</b><br><code>/setup-pstack</code></td><td>單模型又貴又慢、盲區重疊</td><td>預設 Grok 寫功能/修 Bug/跑 swarm；高難架構與交叉裁判交給另一個強模型（可設 <code>inherit-parent</code> 跟隨主模型）</td></tr>
+      <tr><td><b>極窄 PR 棧 + 獨立裁判</b><br><code>opening-a-pr</code></td><td>多 Agent 同改一倉庫容易合爆</td><td>「5 個窄 PR 勝過 1 個胖 PR」；寫碼 Agent 嚴禁自審，每個 PR 派全新 Agent 實跑驗真，由底向上依序合入</td></tr>
+      <tr><td><b>Comment Sicko</b><br><code>/no-comments</code></td><td>寫碼 Agent 愛為廢話註解辯護</td><td>唯讀審校員把關：先 <code>/how</code> <code>/why</code> 確認無外部限制，能轉成型別或 Lint 的先落地再刪註解</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="small muted">註：repo 現況的預設模型分工已改為 Opus 5.5 為主，詳見下方「文章 vs. GitHub 現況」。</p>
+
+  <h3>窄 PR 棧與獨立驗收流水線</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 330" role="img" aria-label="窄 PR 棧：每個 PR 由不同的新 Agent 實跑驗證，只合入從底部開始連續通過的 PR，遇到第一個未通過即為天花板">
+      <defs><marker id="m4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah"/></marker>
+        <marker id="m4g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah-acc"/></marker></defs>
+      <rect x="10" y="30" width="120" height="70" rx="10" class="box-bad"/>
+      <text x="70" y="60" text-anchor="middle" class="t-m bad" font-weight="700">1 個胖 PR</text>
+      <text x="70" y="82" text-anchor="middle" class="t-s mut">難審、難驗、易合爆</text>
+      <text x="70" y="124" text-anchor="middle" class="t-xl mut">↓</text>
+      <rect x="10" y="140" width="120" height="70" rx="10" class="box-good"/>
+      <text x="70" y="170" text-anchor="middle" class="t-m good" font-weight="700">5 個窄 PR</text>
+      <text x="70" y="192" text-anchor="middle" class="t-s mut">每個都可獨立驗證</text>
+
+      <text x="250" y="20" text-anchor="middle" class="t-s mut">PR 棧（寫碼 Agent）</text>
+      <text x="470" y="20" text-anchor="middle" class="t-s mut">獨立驗證者（全新 Agent）</text>
+      <text x="640" y="20" text-anchor="middle" class="t-s mut">Verdict</text>
+
+      <rect x="180" y="30" width="140" height="40" rx="8" class="box-mut"/><text x="250" y="55" text-anchor="middle" class="t-s mut">PR5</text>
+      <rect x="180" y="80" width="140" height="40" rx="8" class="box-bad"/><text x="250" y="105" text-anchor="middle" class="t-s">PR4</text>
+      <rect x="180" y="140" width="140" height="40" rx="8" class="box-good"/><text x="250" y="165" text-anchor="middle" class="t-s">PR3</text>
+      <rect x="180" y="190" width="140" height="40" rx="8" class="box-good"/><text x="250" y="215" text-anchor="middle" class="t-s">PR2</text>
+      <rect x="180" y="240" width="140" height="40" rx="8" class="box-good"/><text x="250" y="265" text-anchor="middle" class="t-s">PR1（底）</text>
+
+      <g class="t-s">
+        <line x1="322" y1="50" x2="398" y2="50" class="ln" marker-end="url(#m4)"/><rect x="402" y="32" width="136" height="36" rx="8" class="box"/><text x="470" y="55" text-anchor="middle" class="t-s">驗證者 #5 實跑</text>
+        <line x1="322" y1="100" x2="398" y2="100" class="ln" marker-end="url(#m4)"/><rect x="402" y="82" width="136" height="36" rx="8" class="box"/><text x="470" y="105" text-anchor="middle" class="t-s">驗證者 #4 實跑</text>
+        <line x1="322" y1="160" x2="398" y2="160" class="ln" marker-end="url(#m4)"/><rect x="402" y="142" width="136" height="36" rx="8" class="box"/><text x="470" y="165" text-anchor="middle" class="t-s">驗證者 #3 實跑</text>
+        <line x1="322" y1="210" x2="398" y2="210" class="ln" marker-end="url(#m4)"/><rect x="402" y="192" width="136" height="36" rx="8" class="box"/><text x="470" y="215" text-anchor="middle" class="t-s">驗證者 #2 實跑</text>
+        <line x1="322" y1="260" x2="398" y2="260" class="ln" marker-end="url(#m4)"/><rect x="402" y="242" width="136" height="36" rx="8" class="box"/><text x="470" y="265" text-anchor="middle" class="t-s">驗證者 #1 實跑</text>
+      </g>
+      <rect x="590" y="34" width="100" height="32" rx="16" class="box-mut"/><text x="640" y="55" text-anchor="middle" class="t-s mut">PASS・等待</text>
+      <rect x="590" y="84" width="100" height="32" rx="16" class="f-fail"/><text x="640" y="105" text-anchor="middle" class="t-s on" font-weight="700">FAIL</text>
+      <rect x="590" y="144" width="100" height="32" rx="16" class="f-pass"/><text x="640" y="165" text-anchor="middle" class="t-s on" font-weight="700">PASS</text>
+      <rect x="590" y="194" width="100" height="32" rx="16" class="f-pass"/><text x="640" y="215" text-anchor="middle" class="t-s on" font-weight="700">PASS</text>
+      <rect x="590" y="244" width="100" height="32" rx="16" class="f-pass"/><text x="640" y="265" text-anchor="middle" class="t-s on" font-weight="700">PASS+NOTES</text>
+
+      <line x1="170" y1="130" x2="750" y2="130" class="ln-dash"/>
+      <text x="748" y="124" text-anchor="end" class="t-s bad" font-weight="700">天花板</text>
+      <line x1="160" y1="282" x2="160" y2="140" class="ln-acc" marker-end="url(#m4g)"/>
+      <text x="70" y="250" text-anchor="middle" class="t-s acc" font-weight="700">由底向上</text>
+      <text x="70" y="268" text-anchor="middle" class="t-s acc" font-weight="700">逐一合入 →</text>
+      <text x="380" y="312" text-anchor="middle" class="t-s mut">只合入從底部連續通過的 PR1–PR3；PR5 雖然 PASS，也要等 PR4 修好重驗。CI 綠燈與 bot 核可都不算 verdict。</text>
+    </svg>
+    <figcaption>依 pstack <code>playbooks/shipping.md</code> 重新繪製：寫碼的 Agent 不得自己驗收，verdict 必須來自沒寫這段程式的 Agent。</figcaption>
+  </figure>
+</section>
+<section id="structure">
+  <h2><span class="num">03</span>核心心法：別再往 CLAUDE.md 塞規則</h2>
+  <div class="quote">Encode Lessons in Structure —— 能用結構性修復解決的，就只留結構性修復；寫進文件的那行指令，本身只是症狀。<br><span class="small" style="font-weight:400">Agent 跳過文件規則時，什麼都不會報錯（Nothing fails when an agent skips them）。</span></div>
+  <p class="small">四層防線圖，以及它和演講五層金字塔、10 月貼文版本的對照，已合併到 <a href="talk.html#pyramid">演講重點 › 信任金字塔</a>。下面是把這套順序自動化的 <code>/correct</code>。</p>
+
+  <h3><code>/correct</code> 五步閉環：從翻歷史歸類到證明檢查會失敗</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 300" role="img" aria-label="/correct 五步閉環：翻歷史歸類、選最高層級、修正、證明會失敗、維護規則表，再次被糾正時回到第一步">
+      <defs><marker id="m2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah-acc"/></marker></defs>
+      <g>
+        <rect x="10" y="24" width="134" height="170" rx="12" class="box"/>
+        <circle cx="34" cy="50" r="14" class="f-acc"/><text x="34" y="55" text-anchor="middle" class="t-m on" font-weight="800">1</text>
+        <text x="56" y="56" class="t-m" font-weight="700">翻歷史・歸類</text>
+        <text x="22" y="92" class="t-s mut">讀 commit、revert、</text>
+        <text x="22" y="112" class="t-s mut">review、規則檔、</text>
+        <text x="22" y="132" class="t-s mut">辯解型註解</text>
+        <text x="22" y="168" class="t-s acc" font-weight="700">犯兩次才成一類</text>
+      </g>
+      <line x1="146" y1="109" x2="160" y2="109" class="ln-acc" marker-end="url(#m2)"/>
+      <g>
+        <rect x="164" y="24" width="134" height="170" rx="12" class="box"/>
+        <circle cx="188" cy="50" r="14" class="f-acc"/><text x="188" y="55" text-anchor="middle" class="t-m on" font-weight="800">2</text>
+        <text x="210" y="56" class="t-m" font-weight="700">選最高層級</text>
+        <text x="176" y="92" class="t-s">① 架構消滅</text>
+        <text x="176" y="112" class="t-s">② 型別 / Lint / CI</text>
+        <text x="176" y="132" class="t-s">③ 測試行為</text>
+        <text x="176" y="152" class="t-s mut">④ 文件（最後）</text>
+        <text x="176" y="178" class="t-s acc" font-weight="700">高層做得到就不往下</text>
+      </g>
+      <line x1="300" y1="109" x2="314" y2="109" class="ln-acc" marker-end="url(#m2)"/>
+      <g>
+        <rect x="318" y="24" width="134" height="170" rx="12" class="box"/>
+        <circle cx="342" cy="50" r="14" class="f-acc"/><text x="342" y="55" text-anchor="middle" class="t-m on" font-weight="800">3</text>
+        <text x="364" y="56" class="t-m" font-weight="700">立即修正</text>
+        <text x="330" y="92" class="t-s mut">最常見的類別先修</text>
+        <text x="330" y="112" class="t-s mut">一個類別一個 commit</text>
+        <text x="330" y="132" class="t-s mut">刪掉會被抄的舊路徑</text>
+        <text x="330" y="168" class="t-s acc" font-weight="700">讓錯誤無處可抄</text>
+      </g>
+      <line x1="454" y1="109" x2="468" y2="109" class="ln-acc" marker-end="url(#m2)"/>
+      <g>
+        <rect x="472" y="24" width="134" height="170" rx="12" class="box-acc"/>
+        <circle cx="496" cy="50" r="14" class="f-acc"/><text x="496" y="55" text-anchor="middle" class="t-m on" font-weight="800">4</text>
+        <text x="518" y="56" class="t-m" font-weight="700">證明會失敗</text>
+        <text x="484" y="92" class="t-s mut">新檢查在真實歷史</text>
+        <text x="484" y="112" class="t-s mut">錯誤上必須報紅</text>
+        <text x="484" y="132" class="t-s mut">本地與 CI 同一指令</text>
+        <text x="484" y="152" class="t-s mut">例外需理由＋到期日</text>
+        <text x="484" y="178" class="t-s acc" font-weight="700">沒紅過＝沒證明</text>
+      </g>
+      <line x1="608" y1="109" x2="622" y2="109" class="ln-acc" marker-end="url(#m2)"/>
+      <g>
+        <rect x="626" y="24" width="124" height="170" rx="12" class="box"/>
+        <circle cx="650" cy="50" r="14" class="f-acc"/><text x="650" y="55" text-anchor="middle" class="t-m on" font-weight="800">5</text>
+        <text x="672" y="56" class="t-m" font-weight="700">規則表</text>
+        <text x="638" y="92" class="t-s mut">每條規則配對</text>
+        <text x="638" y="112" class="t-s mut">它的強制機制</text>
+        <text x="638" y="132" class="t-s mut">錯誤不可能發生</text>
+        <text x="638" y="152" class="t-s mut">時刪除規則</text>
+      </g>
+      <path d="M688,196 C688,262 77,262 77,200" class="ln-acc" marker-end="url(#m2)"/>
+      <rect x="196" y="236" width="368" height="44" rx="22" class="box-acc"/>
+      <text x="380" y="255" text-anchor="middle" class="t-s" font-weight="700">操作者再次糾正 → 回到 ①</text>
+      <text x="380" y="272" text-anchor="middle" class="t-s mut">規則已存在卻沒有強制機制＝重犯，同一次改動直接升級層級</text>
+    </svg>
+    <figcaption>依 pstack <code>skills/correct/SKILL.md</code> 重新繪製。回覆時須列出每個類別的證據、選了哪一層、為何更高層做不到。兩條紀律：同類錯誤<b>犯兩次</b>才立規矩，偶發一次不加複雜度，避免死規矩塞滿倉庫；新檢查必須先在真實歷史錯誤上<b>報紅一次</b>，沒紅過的檢查什麼都證明不了。</figcaption>
+  </figure>
+
+</section>
+<section id="skills">
+  <h2><span class="num">04</span>34 個功能技能（依用途分組）</h2>
+  <p class="sub">多數由 <code>/poteto-mode</code> 在需要時自動呼叫；表格列出你想直接使用的時機。除了 <code>setup-pstack</code>，其餘都設為「只在你輸入時才執行」。</p>
+  <div class="grid g2">
+    <div class="card small"><b class="gt">入口與輔助</b>
+      <ul>
+        <li><code>/poteto-mode</code> 任何非瑣碎任務的預設入口</li>
+        <li><code>/poteto-help</code> 不知道該用哪個技能時問它</li>
+        <li><code>/in-your-own-words</code> 開工前讓 Agent 複述目標與問題</li>
+        <li><code>/sharpen</code> 把 prompt 改得「更深而非更長」，不執行任務</li>
+        <li><code>/bro</code> 把上一則訊息改寫成白話</li>
+      </ul></div>
+    <div class="card small"><b class="gt">理解程式碼</b>
+      <ul>
+        <li><code>/how</code> 子系統如何運作的導覽</li>
+        <li><code>/why</code> 從 commit / PR 討論追查「為什麼這樣寫」，標明推論與未知</li>
+        <li><code>/teach</code> 結合 how + why，逐張圖解釋</li>
+        <li><code>/recall</code> 從你的對話記錄重建主題上下文</li>
+      </ul></div>
+    <div class="card small"><b class="gt">設計與審查</b>
+      <ul>
+        <li><code>/architect</code> 跨函式邊界前先定呼叫方用法、型別、模組形狀</li>
+        <li><code>/arena</code> 同一任務 N 個並行嘗試，取各家精華</li>
+        <li><code>/swarm</code> N 個 worker 分片並行，彙整一份報告</li>
+        <li><code>/interrogate</code> 讓不同模型攻擊 diff，只保留實跑證實的問題</li>
+        <li><code>/blast-radius</code> 小改動會波及什麼？用實跑證明安全</li>
+        <li><code>/figure-it-out</code> 沒有現成劇本時，設計一套可稽核的劇本</li>
+      </ul></div>
+    <div class="card small"><b class="gt">建構與清理</b>
+      <ul>
+        <li><code>/tdd</code> 先寫失敗測試再修</li>
+        <li><code>/no-comments</code> 審查前清註解（派出 Comment Sicko）</li>
+        <li><code>/unslop</code> 移除文字中的 AI 味</li>
+        <li><code>/typescript-best-practices</code> 型別紀律的 TS 語法落地</li>
+        <li><code>/technical-writing</code> 文件、RFC、PR 描述、commit 訊息標準</li>
+      </ul></div>
+    <div class="card small"><b class="gt">驗證</b>
+      <ul>
+        <li><code>/create-verification-skill</code> 產生專案內 verify 技能 + Feature Map</li>
+        <li><code>/maintain-verification-skill</code> Feature Map 與 App 脫節時修正</li>
+        <li><code>/create-formal-verification-skill</code> 競態、重試、狀態機、解析器的形式化驗證</li>
+        <li><code>/maintain-formal-verification-skill</code> 程式變更後更新模型並重跑</li>
+        <li><code>/statechart</code> 檢查 TLA+ 模型並畫成 Mermaid 狀態圖，標出違規路徑</li>
+        <li><code>/benchmark-checklist</code> 回報效能數字前先審查數字本身</li>
+      </ul></div>
+    <div class="card small"><b class="gt">追蹤、回顧、自訂</b>
+      <ul>
+        <li><code>/show-me-your-work</code> 決策記錄到可提交的 TSV</li>
+        <li><code>/ketchup</code> / <code>/ketchup-video</code> 進度追趕摘要（文字 / 字幕影片）</li>
+        <li><code>/reflect</code> 長任務完成後，把做法沉澱為技能修改</li>
+        <li><code>/correct</code> 從歷史挖出重複錯誤，以最高層級修正並維護規則表</li>
+        <li><code>/automate-me</code> 從你的對話產生 <code>&lt;你的名字&gt;-mode</code></li>
+        <li><code>/setup-pstack</code> 偵測模型並寫入角色設定</li>
+        <li><code>/make-bot-ui</code> 建立能透過 webhook 喚醒 Grok Bot 的頁面</li>
+      </ul></div>
+  </div>
+</section>
+
+<section id="playbooks">
+  <h2><span class="num">05</span>22 套劇本（Playbooks）</h2>
+  <p class="sub"><code>/poteto-mode</code> 依你的描述挑一套，把步驟原樣複製進待辦清單。</p>
+  <div class="tscroll"><table class="tbl">
+    <thead><tr><th>劇本</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td>investigation</td><td>唯讀問題：x 怎麼運作、y 為什麼這樣做</td></tr>
+      <tr><td>bug fix</td><td>重現 → 找根因 → 附執行期證據修復</td></tr>
+      <tr><td>perf</td><td>針對量測到的慢，依基線改善</td></tr>
+      <tr><td>hillclimb</td><td>對單一指標持續科學化改善，每個成功假設一個 commit</td></tr>
+      <tr><td>runtime forensics</td><td>從埋點診斷即時症狀（洩漏、閒置 CPU 空轉、閃爍）</td></tr>
+      <tr><td>trace forensics</td><td>分析已擷取的 profile（cpuprofile、trace、heap snapshot）</td></tr>
+      <tr><td>feature</td><td>從具名資料形狀出發建構新行為</td></tr>
+      <tr><td>refactoring</td><td>保持行為不變的結構調整</td></tr>
+      <tr><td>prototype</td><td>拋棄式原型，便宜地做設計決策</td></tr>
+      <tr><td>visual parity</td><td>兩個實作間像素級 UI 一致</td></tr>
+      <tr><td>authoring a skill</td><td>撰寫或修改 SKILL.md</td></tr>
+      <tr><td>eval</td><td>盲測技能 / prompt 修改對 Agent 行為的影響</td></tr>
+      <tr><td>babysit</td><td>把 PR 或 PR 棧推到可合併：衝突、審查討論、CI</td></tr>
+      <tr><td>shipping</td><td>獨立驗證綠燈的 PR 棧，由底向上合入</td></tr>
+      <tr><td>autonomous run</td><td>不中斷地把長任務做完</td></tr>
+      <tr><td>autopilot-full</td><td>獨立 PR 各有負責人一路到合併，swarm 驗證每個版本</td></tr>
+      <tr><td>autopilot-stack</td><td>同上但不合併，交給人審查後再合</td></tr>
+      <tr><td>session pickup</td><td>接手前一個 Agent 進行中的工作</td></tr>
+      <tr><td>pause safely</td><td>乾淨地暫停，方便之後恢復</td></tr>
+      <tr><td>multi-phase plan</td><td>跨多階段或多個堆疊 PR 的工作</td></tr>
+      <tr><td>worktree cleanup</td><td>安全地清理已合併 / 廢棄的 worktree 與 iOS 模擬器</td></tr>
+      <tr><td>opening a pr</td><td>由小而有序的 commit 開 PR，每套劇本最後都會呼叫</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="principles">
+  <h2><span class="num">06</span>24 條原則（可當成「一句話糾偏」口令）</h2>
+  <p class="sub">每條都是一個獨立技能，名字就是口令。Agent 跑偏時直接說出名字即可，例如 <code>subtract before you add</code>、<code>prove it works</code>。</p>
+  <div class="tscroll"><table class="tbl">
+    <thead><tr><th>分組</th><th>原則</th><th>一句話</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="10">核心</td><td>laziness-protocol</td><td>傾向刪除，用最小改動解決問題</td></tr>
+      <tr><td>foundational-thinking</td><td>先把資料結構選對，下游程式自然顯而易見</td></tr>
+      <tr><td>redesign-from-first-principles</td><td>當作需求從第一天就存在般重新設計，而非外掛</td></tr>
+      <tr><td>attack-the-premise</td><td>共用同一前提的修法連續失敗，就先驗證前提本身</td></tr>
+      <tr><td>subtract-before-you-add</td><td>先移除死碼、冗餘驗證，再在更簡單的基礎上建構</td></tr>
+      <tr><td>minimize-reader-load</td><td>減少問題到答案之間的層數與讀者腦中隱藏狀態</td></tr>
+      <tr><td>outcome-oriented-execution</td><td>遷移時直奔目標架構，不寫過渡相容程式</td></tr>
+      <tr><td>experience-first</td><td>使用者體驗優先於實作方便；寧少而精</td></tr>
+      <tr><td>exhaust-the-design-space</td><td>先做 2–3 個競爭原型並排比較再決定</td></tr>
+      <tr><td>build-the-lever</td><td>做工具（codemod、腳本、技能）而非手工，工具可被重跑審查</td></tr>
+      <tr><td rowspan="6">架構</td><td>model-the-domain</td><td>用結構表達領域，而非散落的條件判斷</td></tr>
+      <tr><td>boundary-discipline</td><td>防護集中在系統邊界；內部信任型別，邏輯放純函式</td></tr>
+      <tr><td>type-system-discipline</td><td>讓非法狀態無法表示、品牌化原始型別、邊界解析外部資料</td></tr>
+      <tr><td>make-operations-idempotent</td><td>不論先前跑到哪，結果都收斂到同一狀態</td></tr>
+      <tr><td>migrate-callers-then-delete-legacy-apis</td><td>同一波遷移呼叫方並刪除舊 API，不留相容層</td></tr>
+      <tr><td>separate-before-serializing-shared-state</td><td>先消除共享，只有真需要單一寫入者才序列化</td></tr>
+      <tr><td rowspan="5">驗證</td><td>prove-it-works</td><td>宣告完成前對真實產物驗證，「編譯通過」不算</td></tr>
+      <tr><td>fix-root-causes</td><td>追到第一個出錯的地方修；防護只在狀態合法時才算修復</td></tr>
+      <tr><td>sequence-verifiable-units</td><td>拆成每步都可驗證的小單位，依序交付</td></tr>
+      <tr><td>test-behavior-not-implementation</td><td>測使用者看得到的行為，內部改動不該讓測試壞</td></tr>
+      <tr><td>explain-the-number</td><td>信任或回報數字前，先找出它的限制因素</td></tr>
+      <tr><td rowspan="2">委派</td><td>guard-the-context-window</td><td>大量內容交給子 Agent，主線程只留摘要</td></tr>
+      <tr><td>never-block-on-the-human</td><td>先做、呈現結果、讓人事後修正；只有不可逆動作才確認</td></tr>
+      <tr><td>元原則</td><td>encode-lessons-in-structure</td><td>把規則寫成 Lint、旗標、執行期檢查或腳本，而不是更多文字</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="agents">
+  <h2><span class="num">07</span>2 個子 Agent 與自動化包</h2>
+  <div class="grid g3">
+    <div class="card small"><b>poteto-agent</b><br><code>/poteto-mode</code> 執行期間派出的代理人包裝。開工前完整讀取 poteto-mode 的 SKILL.md 與原則索引；用 generalPurpose 取代會漂移。不要用它來跑劇本本身。Claude Code 中為 <code>pstack:poteto-agent</code>。</div>
+    <div class="card small"><b>Comment Sicko</b><br>唯讀註解審查員（「Yes... Ha ha ha... Yes!」）。只放過：授權標頭、外部依賴造成的非直覺行為、<code>prettier-ignore</code>、公開 API 合約文件註解、解釋限制的 Issue/RFC 連結。<code>IMPORTANT</code>、<code>too risky</code> 之類的長篇辯解視為「自白」，標記 <code>MUST KILL</code>。通常透過 <code>/no-comments</code> 呼叫。</div>
+    <div class="card small"><b>benny 自動化包</b><br>預設休眠。分流 Slack 上的問題回報，再以真實 UI 證據重現並修復已確認的 Bug。依 <code>automations/benny/FOR_AGENTS.md</code> 設定，僅支援 Cursor。</div>
+  </div>
+  <h3>新手指南 10 章</h3>
+  <ol class="small cols2">
+    <li>Setup：安裝與選模型</li>
+    <li>poteto-mode：給目標、看它選劇本</li>
+    <li>Understand：how / why / teach / recall</li>
+    <li>Design：architect / arena / swarm / interrogate</li>
+    <li>Build &amp; clean：tdd / unslop / no-comments</li>
+    <li>Verify &amp; ship：真實 App 驗證、形式化驗證、開 PR 到合併</li>
+    <li>Overnight：過夜合約、可稽核決策記錄</li>
+    <li>Principles：用 24 個名字中途糾偏</li>
+    <li>Make it yours：自己的 mode、/correct</li>
+    <li>Recipes &amp; pitfalls：可複製的 prompt 與常見錯誤</li>
+  </ol>
+  <h3>沒打包在 pstack 裡的</h3>
+  <ul class="small">
+    <li><code>/deslop</code>、<code>control-cli</code>（CLI/TUI）、<code>control-ui</code>（瀏覽器、Electron、Web）在 <code>cursor-team-kit</code> 插件，想要完整套件可一起裝。</li>
+    <li>沒有規劃類技能：作者表示 Cursor 的 plan mode 已足夠，而且「最好的規格就是程式碼」。</li>
+    <li>延伸：同一倉庫還有 <code>dyl-stack</code>（Dylan Gattey 建立在 pstack 之上的個人風格）。</li>
+  </ul>
+</section>
+
+<section id="diff">
+  <h2><span class="num">08</span>文章說法 vs. GitHub 現況</h2>
+  <p class="sub">文章寫於 11/8–11/13，repo 持續更新，有幾處已不同，以 repo 為準：</p>
+  <div class="tscroll"><table class="tbl">
+    <thead><tr><th>項目</th><th>文章</th><th>GitHub（2026-11-19）</th></tr></thead>
+    <tbody>
+      <tr><td>劇本數</td><td>23 套</td><td>README 寫 twenty-two，資料夾也是 22 個</td></tr>
+      <tr><td>預設模型分工</td><td>Grok 寫功能 / 修 Bug / 跑 swarm，Opus 5.5 負責架構與裁判</td><td>程式碼代理、文字與判斷預設都交給 Opus 5.5（xhigh）；Fable 5.2 只在你指名或 Opus 同一任務失敗兩次後才用；審查小組預設 Fable 5.2 / Opus 5.5 / Gemini 4 Neon。都能用 <code>/setup-pstack</code> 改</td></tr>
+      <tr><td>技能數</td><td>58（34 + 24）</td><td>一致：58 個資料夾，其中 24 個 <code>principle-*</code></td></tr>
+      <tr><td>Claude Code 適配</td><td>harness/pstack/</td><td>一致，位於 repo 根目錄 <code>harness/pstack/</code>，由腳本自動產生</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<div class="pager"><a href="tibo-14.html"><small>← 上一頁</small>14 條清單</a><a class="next" href="roadmap.html"><small>下一頁 →</small>優化步驟</a></div>
+</main>
+<footer><div class="wrap">資料來源：<br>
+・<a href="https://zhuanlan.zhihu.com/p/2104561652888876670">Grok Bot 工程師土豆姐：所有程式碼都是垃圾（我的除外）— Ai學習的老章，知乎，2026-11-13</a><br>
+・<a href="https://mp.weixin.qq.com/s/7I8p5lG4q1swF09ELF1jGw">Grok 土豆姐的 Agent 實戰經驗，這套 Harness 已開源！— Ai學習的老章，微信，2026-11-08</a><br>
+・<a href="https://x.com/poteto/status/2117043478140276847">poteto 的 tibo.dog trivia 推文，X，2026-11-02</a><br>
+・<a href="https://x.com/MaiYangAI/article/2111603532210299234">非 CS 出身的 Lauren Tan，是怎麼一步步放手給 agent 的 — Mai Yang，X 長文，2026-10-18</a><br>
+・<a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins · pstack（MIT），commit e58dd04，2026-11-19</a><br>
+原始演講：Lauren Tan (poteto)《All Code Is Slop (Except Mine)》，AI Engineer Code Summit。「優化步驟」為依上述內容整理的落地建議。</div></footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

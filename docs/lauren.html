@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>人物與信任</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg on" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a></div></div>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Lauren Tan（poteto）· 人物與方法</div>
+    <h1>人物與信任<small>非 CS 出身，怎麼一步步放手給 Agent</small></h1>
+    <p class="lede">從 13 歲自學網頁、讀金融、創業失敗，到 React 團隊與 Grok Bot。這一頁補上她的背景、「信任曲線」，以及 Benny 到 Grok Bot 的由來。</p>
+    <nav class="toc"><div class="wrap"><a href="#path">成長路徑</a><a href="#trust">信任曲線</a><a href="#lazy">Benny → Grok Bot</a><a href="#habits">個人習慣</a></div></nav>
+  </div>
+</header>
+<main class="wrap">
+<section id="path">
+  <h2><span class="num">00</span>成長路徑：沒讀過 CS，一步步走到 React 團隊</h2>
+  <p class="sub">她大學讀的是金融，第一次覺得寫程式好玩，是在金融建模課寫 Excel VBA 巨集。每一份工作幾乎都來自公開分享時認識的人。</p>
+  <figure class="fig">
+    <svg viewBox="0 0 760 580" role="img" aria-label="Lauren Tan 的成長路徑時間軸：從 13 歲自學網頁、讀金融、創業、Ember 社群、DockYard、Netflix、Meta React 團隊，到 Cursor 與 SpaceXAI">
+      <line x1="140" y1="30" x2="140" y2="560" stroke="var(--border)" stroke-width="3"/>
+      <g>
+        <text x="122" y="44" text-anchor="end" class="t-s" font-weight="700">約 13 歲</text><circle cx="140" cy="40" r="8" class="f-b3"/>
+        <text x="162" y="44" class="t-m" font-weight="700">一套盜版 Fireworks 開始</text>
+        <text x="162" y="64" class="t-s mut">新加坡長大；泡網頁設計論壇與 IRC，靠「檢視原始碼」自學 HTML / CSS / JS</text>
+      </g>
+      <g>
+        <text x="122" y="98" text-anchor="end" class="t-s" font-weight="700">15–16 歲</text><circle cx="140" cy="94" r="8" class="f-b3"/>
+        <text x="162" y="98" class="t-m" font-weight="700">第一份付費案子</text>
+        <text x="162" y="118" class="t-s mut">替學校重做網站</text>
+      </g>
+      <g>
+        <text x="122" y="152" text-anchor="end" class="t-s" font-weight="700">2009–2011</text><circle cx="140" cy="148" r="8" class="f-b3"/>
+        <text x="162" y="152" class="t-m" font-weight="700">Monash 大學商科（會計與金融）</text>
+        <text x="162" y="172" class="t-s mut">前 5% 畢業；在金融建模課寫 VBA 巨集，重新愛上程式</text>
+      </g>
+      <g>
+        <text x="122" y="206" text-anchor="end" class="t-s" font-weight="700">2012–2013</text><circle cx="140" cy="202" r="8" class="f-b2"/>
+        <text x="162" y="206" class="t-m" font-weight="700">創業 ThePriceGeek，失敗</text>
+        <text x="162" y="226" class="t-s mut">跨 eBay / Amazon / Craigslist 比價搜尋；上過 HN 首頁，月入約 1,000 美元撐不下去</text>
+      </g>
+      <g>
+        <text x="122" y="260" text-anchor="end" class="t-s" font-weight="700">2014</text><circle cx="140" cy="256" r="8" class="f-b2"/>
+        <text x="162" y="260" class="t-m" font-weight="700">墨爾本：邊工作邊學 JS，把學習寫成部落格</text>
+        <text x="162" y="280" class="t-s mut">Everperform 首位工程師（Ember）→ Homely（jQuery 遷 React）；推文被 EmberConf 找上去演講</text>
+      </g>
+      <g>
+        <text x="122" y="314" text-anchor="end" class="t-s" font-weight="700">2015.04</text><circle cx="140" cy="310" r="8" class="f-b2"/>
+        <text x="162" y="314" class="t-m" font-weight="700">DockYard（波士頓）：第一份正式工作</text>
+        <text x="162" y="334" class="t-s mut">Ember＋Elixir 接案；繼續發推、繼續演講</text>
+      </g>
+      <g>
+        <text x="122" y="368" text-anchor="end" class="t-s" font-weight="700">2016.07</text><circle cx="140" cy="364" r="8" class="f-b5"/>
+        <text x="162" y="368" class="t-m" font-weight="700">Netflix：工程師 → 經理 → 想回去當 maker</text>
+        <text x="162" y="388" class="t-s mut">做內部 studio 工具；2017.11 接手團隊，帶過十多人，近四年</text>
+      </g>
+      <g>
+        <text x="122" y="422" text-anchor="end" class="t-s" font-weight="700">2020.03</text><circle cx="140" cy="418" r="8" class="f-b5"/>
+        <text x="162" y="422" class="t-m" font-weight="700">Meta：React 團隊六年</text>
+        <text x="162" y="442" class="t-s mut">Server Components → React Core 經理（React 18）→ 回到工程師，主導 React Compiler</text>
+      </g>
+      <g>
+        <text x="122" y="476" text-anchor="end" class="t-s bad" font-weight="700">低谷</text><circle cx="140" cy="472" r="8" class="f-fail"/>
+        <text x="162" y="476" class="t-m" font-weight="700">倦怠，休息一個月做 side project</text>
+        <text x="162" y="496" class="t-s mut">第一次做 Agent 編排器，從頭重寫 6 次；發現自己做專案能開心地做一整天</text>
+      </g>
+      <g>
+        <text x="122" y="530" text-anchor="end" class="t-s acc" font-weight="700">2026</text><circle cx="140" cy="526" r="9" class="f-acc"/>
+        <text x="162" y="530" class="t-m acc" font-weight="700">3 月加入 Cursor → 8 月成為 SpaceXAI Principal Engineer</text>
+        <text x="162" y="550" class="t-s mut">參與 Cursor 3 與 Grok Bot；面試前其實沒用過 Cursor，為了面試專案才用了兩天</text>
+      </g>
+    </svg>
+    <figcaption>依 Mai Yang 整理（其引用 LinkedIn、部落格、The Changelog #386、React Conf 2025 訪談）繪製。</figcaption>
+  </figure>
+</section>
+
+<section id="trust">
+  <h2><span class="num">01</span>信任是一點點攢出來的</h2>
+  <p class="sub">PR 數量從來不是目標；她要的是「自己不在場時，Agent 也能交出高品質成果」。9/21 她發佈影片分享「上個月往生產環境合入 2,500 個 PR」，到 10 月個人單月已是 3,127 個。</p>
+  <div class="grid g2">
+    <div class="card small"><b>她對 Agent 的看法</b><br>Agent 就像<b>永遠處在失憶狀態的新進員工</b>：記不住你說過什麼，也不會真的學會新東西，只能靠 rules、skill、工具與長期記憶去近似。</div>
+    <div class="card small"><b>瓶頸在驗證</b><br>剛進 Cursor 時她每天手動用 Chrome DevTools 抓效能 trace、拍記憶體快照，煩到開始想「我們明明有 Agent」。Agent 寫得很快，難的是確認它寫對了，於是她開始寫驗證類 skill，讓 Agent 自己跑 App、抓 trace、找熱點。</div>
+    <div class="card small"><b>每次介入都是訊號</b><br>8 月她寫道：每次出手糾正 Agent，都該想辦法讓這類糾正<b>永遠不再需要</b>。這就是 pstack <code>/correct</code> 的起點。</div>
+    <div class="card small"><b>程式碼庫就是記憶</b><br>10 月她補充：Agent 反覆犯的錯若不變成約束，就會像病毒一樣一直被複製下去（對照演講的「雜草擴散」）。</div>
+  </div>
+
+  <h3>信任曲線：為什麼沒辦法從 5 個直接跳到 100 個</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 360" role="img" aria-label="信任曲線示意：並行 1 到 5 個 Agent 時需要一直盯著，是最難走出的區段；依金字塔建立信任後曲線上升，才能放手到 100 個；不信任就硬開 100 個只會得到低品質 PR">
+      <defs><marker id="s1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah"/></marker>
+        <marker id="s1r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--bad)"/></marker></defs>
+      <rect x="96" y="40" width="160" height="258" class="box-bad" opacity=".55"/>
+      <text x="176" y="62" text-anchor="middle" class="t-s bad" font-weight="700">卡關區</text>
+      <text x="176" y="80" text-anchor="middle" class="t-s mut">每個對話都得盯</text>
+      <text x="176" y="98" text-anchor="middle" class="t-s mut">人一走開就做錯</text>
+      <line x1="90" y1="300" x2="730" y2="300" class="ln" marker-end="url(#s1)"/>
+      <line x1="90" y1="300" x2="90" y2="30" class="ln" marker-end="url(#s1)"/>
+      <text x="100" y="24" class="t-s mut">信任（敢不盯著的程度）</text>
+      <text x="110" y="320" text-anchor="middle" class="t-s mut">1</text>
+      <text x="236" y="320" text-anchor="middle" class="t-s mut">5</text>
+      <text x="450" y="320" text-anchor="middle" class="t-s mut">20</text>
+      <text x="700" y="320" text-anchor="middle" class="t-s mut">100</text>
+      <text x="410" y="348" text-anchor="middle" class="t-s mut">同時並行的 Agent 數</text>
+
+      <path d="M110,276 C170,274 210,272 248,268 C330,258 380,140 450,104 C540,70 620,60 700,56" stroke="var(--good)" stroke-width="3.5" fill="none"/>
+      <circle cx="305" cy="240" r="6" class="f-b1"/><text x="318" y="244" class="t-s" font-weight="700">① 改程式碼庫</text>
+      <circle cx="356" cy="182" r="6" class="f-b2"/><text x="369" y="186" class="t-s" font-weight="700">② 靜態分析</text>
+      <circle cx="410" cy="128" r="6" class="f-b3"/><text x="423" y="132" class="t-s" font-weight="700">③ 讓 Agent 自證</text>
+      <text x="700" y="44" text-anchor="end" class="t-s good" font-weight="700">放手：睡覺時 Agent 也交出好成果</text>
+
+      <path d="M256,284 L690,284" stroke="var(--bad)" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#s1r)"/>
+      <text x="520" y="276" text-anchor="middle" class="t-s bad" font-weight="700">不信任就硬開 100 個 → 低品質 PR、回歸、Bug</text>
+    </svg>
+    <figcaption>依她 9/21 分享影片中的「信任曲線」描述繪製的示意圖，曲線形狀非實測數據。往上爬的方法就是 <a href="talk.html#pyramid">信任金字塔</a>。</figcaption>
+  </figure>
+</section>
+
+<section id="lazy">
+  <h2><span class="num">02</span>「懶」是很實在的動力：從 Benny 到 Grok Bot</h2>
+  <p class="sub">她自稱是很懶的人：Cursor 的 Bug 回報太多，她只想把它們全部修掉，最好在她睡覺時就修好。</p>
+  <figure class="fig">
+    <svg viewBox="0 0 760 270" role="img" aria-label="從 Benny 到 Grok Bot：Bug 回報太多，做了會自動修 Bug 的 Benny，大家都想要，啟發 Grok Bot 讓人人定義自己的 bot，她變成數位同事的經理">
+      <defs><marker id="s2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" class="ah-acc"/></marker></defs>
+      <rect x="12" y="20" width="136" height="120" rx="12" class="box-bad"/>
+      <text x="80" y="50" text-anchor="middle" class="t-m bad" font-weight="700">Bug 回報太多</text>
+      <text x="80" y="76" text-anchor="middle" class="t-s mut">不想一個個手修</text>
+      <text x="80" y="96" text-anchor="middle" class="t-s mut">想在睡覺時</text>
+      <text x="80" y="114" text-anchor="middle" class="t-s mut">全部修掉</text>
+      <line x1="150" y1="80" x2="160" y2="80" class="ln-acc" marker-end="url(#s2)"/>
+      <rect x="162" y="20" width="136" height="120" rx="12" class="box"/>
+      <text x="230" y="50" text-anchor="middle" class="t-m" font-weight="700">Benny 🐶</text>
+      <text x="230" y="76" text-anchor="middle" class="t-s mut">給自己做的 bot</text>
+      <text x="230" y="96" text-anchor="middle" class="t-s mut">在她睡覺時</text>
+      <text x="230" y="114" text-anchor="middle" class="t-s mut">自動把 Bug 修掉</text>
+      <line x1="300" y1="80" x2="310" y2="80" class="ln-acc" marker-end="url(#s2)"/>
+      <rect x="312" y="20" width="136" height="120" rx="12" class="box"/>
+      <text x="380" y="50" text-anchor="middle" class="t-m" font-weight="700">大家都想要</text>
+      <text x="380" y="76" text-anchor="middle" class="t-s mut">很多人來問</text>
+      <text x="380" y="96" text-anchor="middle" class="t-s mut">「我也能有一個嗎？」</text>
+      <text x="380" y="114" text-anchor="middle" class="t-s mut">→ 啟發 Grok Bot</text>
+      <line x1="450" y1="80" x2="460" y2="80" class="ln-acc" marker-end="url(#s2)"/>
+      <rect x="462" y="20" width="136" height="120" rx="12" class="box-acc"/>
+      <text x="530" y="50" text-anchor="middle" class="t-m" font-weight="700">Grok Bot</text>
+      <text x="530" y="76" text-anchor="middle" class="t-s mut">人人定義自己的 bot</text>
+      <text x="530" y="96" text-anchor="middle" class="t-s mut">身份・自己的電腦</text>
+      <text x="530" y="114" text-anchor="middle" class="t-s mut">日常任務・自動化</text>
+      <line x1="600" y1="80" x2="610" y2="80" class="ln-acc" marker-end="url(#s2)"/>
+      <rect x="612" y="20" width="136" height="120" rx="12" class="box-good"/>
+      <text x="680" y="50" text-anchor="middle" class="t-m good" font-weight="700">她的新角色</text>
+      <text x="680" y="76" text-anchor="middle" class="t-s mut">bot 自動修回饋</text>
+      <text x="680" y="96" text-anchor="middle" class="t-s mut">她負責 review</text>
+      <text x="680" y="114" text-anchor="middle" class="t-s mut">＝數位同事的經理</text>
+
+      <rect x="12" y="164" width="360" height="90" rx="12" class="box"/>
+      <text x="28" y="190" class="t-s acc" font-weight="700">開源版：pstack/automations/benny</text>
+      <text x="28" y="214" class="t-s">Slack 問題回報分流 → 重現 → 附 UI 證據修復</text>
+      <text x="28" y="236" class="t-s mut">預設休眠、僅支援 Cursor</text>
+      <rect x="388" y="164" width="360" height="90" rx="12" class="box"/>
+      <text x="404" y="190" class="t-s acc" font-weight="700">Grok Bot 客戶端架構</text>
+      <text x="404" y="214" class="t-s">粗糙原型 → 用 Dune 框架整個重構</text>
+      <text x="404" y="236" class="t-s mut">目標：上下文很少的 Agent 也能預設寫出好程式碼</text>
+    </svg>
+    <figcaption>依 Mai Yang 整理的 Grok Bot 發佈訪談片段與 pstack README 繪製。Grok Bot 是團隊共同完成，她最自豪的是客戶端架構。</figcaption>
+  </figure>
+</section>
+
+<section id="habits">
+  <h2><span class="num">03</span>個人層面：今天就能開始的習慣</h2>
+  <p class="sub">技術面的做法（先定義驗證、只跑 1–5 個、同錯往上提一層修）已合併進 <a href="roadmap.html">優化步驟</a>；這裡只列個人習慣。</p>
+  <div class="grid g2">
+    <div class="card small"><b>邊學邊公開</b><br>她能上 EmberConf，靠的是學 Ember 時寫的部落格與推文。不必等學成才發，學到哪寫到哪，別人才有機會找到你。</div>
+    <div class="card small"><b>列一張害怕清單</b><br>她把「不害怕＝太舒適」當訊號。寫下最近因為怕而沒做的一兩件事（投稿、發長文、去面試），挑一件去試。</div>
+    <div class="card small"><b>從最煩的重複工作下手，先自己走一遍</b><br>Benny 起於 Bug 太多；驗證 skill 起於手動抓了很久的 trace。親手走通流程，才知道該怎麼讓 Agent 做、怎樣算做對。</div>
+    <div class="card small"><b>每年問自己一次：還興奮嗎？</b><br>她當經理前就和自己約好每年重新評估，不是夢想中的工作就回頭。用 AI 也一樣，給自己定一個回看的時間。</div>
+  </div>
+  <div class="quote">10/8 她只發了兩行字，大意是：你應該更有野心，遠比現在更有野心。</div>
+</section>
+
+<div class="pager"><a href="index.html"><small>← 上一頁</small>總覽</a><a class="next" href="talk.html"><small>下一頁 →</small>演講重點</a></div>
+</main>
+<footer><div class="wrap">資料來源：<br>
+・<a href="https://zhuanlan.zhihu.com/p/2104561652888876670">Grok Bot 工程師土豆姐：所有程式碼都是垃圾（我的除外）— Ai學習的老章，知乎，2026-11-13</a><br>
+・<a href="https://mp.weixin.qq.com/s/7I8p5lG4q1swF09ELF1jGw">Grok 土豆姐的 Agent 實戰經驗，這套 Harness 已開源！— Ai學習的老章，微信，2026-11-08</a><br>
+・<a href="https://x.com/poteto/status/2117043478140276847">poteto 的 tibo.dog trivia 推文，X，2026-11-02</a><br>
+・<a href="https://x.com/MaiYangAI/article/2111603532210299234">非 CS 出身的 Lauren Tan，是怎麼一步步放手給 agent 的 — Mai Yang，X 長文，2026-10-18</a><br>
+・<a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins · pstack（MIT），commit e58dd04，2026-11-19</a><br>
+原始演講：Lauren Tan (poteto)《All Code Is Slop (Except Mine)》，AI Engineer Code Summit。「優化步驟」為依上述內容整理的落地建議。</div></footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

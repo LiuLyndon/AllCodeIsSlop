@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>優化步驟</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg on" href="roadmap.html">優化步驟</a></div></div>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">落地路線圖 · 可勾選追蹤</div>
+    <h1>優化步驟<small>從盤點現況到外迴圈自動化</small></h1>
+    <p class="lede">綜合演講、14 條清單與 pstack 整理成的執行順序。勾選進度只存在你自己的瀏覽器。</p>
+    <nav class="toc"><div class="wrap"><a href="#steps">Phase 0–7</a><a href="#caveats">注意事項</a></div></nav>
+  </div>
+</header>
+<main class="wrap">
+<section id="steps">
+  <h2><span class="num">00</span>優化步驟：團隊落地路線圖</h2>
+  <p class="sub">綜合兩篇文章整理成可執行順序。可直接勾選追蹤進度（進度只存在你自己的瀏覽器）。</p>
+  <div class="progress" id="progress">進度 <span id="ptext">0 / 0</span><div class="pbar"><div class="pfill" id="pfill"></div></div></div>
+
+  <div class="phase"><div class="badge">0</div><div class="card">
+    <h3>盤點現況：找出你卡在金字塔哪一層</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c0a"><label for="c0a">翻出最近兩週人工打回的 10 個 Agent PR，列出重複問題（跨模組 import、濫用副作用 Hook、硬編碼兜底…）</label></li>
+      <li><input type="checkbox" id="c0b"><label for="c0b">逐項標記：這個問題能否用「架構 / Lint / 型別 / 測試」攔下？只有真的不行才進 AGENTS.md</label></li>
+      <li><input type="checkbox" id="c0d"><label for="c0d">從最煩的重複工作下手，先自己手動走一遍，弄清楚「怎樣算做對」再交給 Agent</label></li>
+      <li><input type="checkbox" id="c0c"><label for="c0c">量測基線：每週合入 PR 數、回滾率、人工 review 時數</label></li>
+    </ul>
+  </div></div>
+
+  <div class="phase"><div class="badge">1</div><div class="card">
+    <h3>安裝 pstack 並產生驗證技能（收益第一名）</h3>
+<pre><code># Cursor
+/add-plugin pstack
+
+# Claude Code
+/plugin marketplace add cursor/plugins
+/plugin install pstack@cursor-plugins
+/pstack:setup-pstack</code></pre>
+    <ul class="check">
+      <li><input type="checkbox" id="c1a"><label for="c1a">依預算選檔（unlimited / large / medium / small）；只有單一模型就把角色設 <code>inherit-parent</code></label></li>
+      <li><input type="checkbox" id="c1b"><label for="c1b">精靈詢問是否產生 <code>/create-verification-skill</code> 時答「是」，讓它寫入 <code>.cursor/skills/verify-&lt;app&gt;/</code> 並提交進倉庫</label></li>
+      <li><input type="checkbox" id="c1c"><label for="c1c">確認 Agent 能自己啟動 App、操作、截圖/錄影作為證據</label></li>
+    </ul>
+  </div></div>
+
+  <div class="phase"><div class="badge">2</div><div class="card">
+    <h3>把教訓焊進結構：跑 <code>/correct</code>，Lint 錯誤訊息即規則</h3>
+<pre><code>/pstack:correct</code></pre>
+    <ul class="check">
+      <li><input type="checkbox" id="c2a"><label for="c2a">讓它翻歷史 Commit、Revert、評論，把 Agent 連踩兩次的坑轉成架構邊界或靜態檢查</label></li>
+      <li><input type="checkbox" id="c2b"><label for="c2b">每條 Lint 錯誤訊息都附「怎麼改」—— Agent 讀錯即可自癒</label></li>
+      <li><input type="checkbox" id="c2c"><label for="c2c">新規則先在真實歷史錯誤上跑一次，確認會報紅</label></li>
+      <li><input type="checkbox" id="c2d"><label for="c2d">建立依賴圖邊界（例：renderer ↛ main，共用型別只走 <code>shared/</code>）</label></li>
+      <li><input type="checkbox" id="c2e"><label for="c2e">用檔名後綴傳遞約束（例：<code>*.hot.ts</code> 熱路徑禁止配置）並以 Lint 強制</label></li>
+      <li><input type="checkbox" id="c2f"><label for="c2f">把需要「微妙技巧」的 API（如 <code>useEffect</code>）封裝進底層，業務碼禁用</label></li>
+      <li><input type="checkbox" id="c2h"><label for="c2h">把效能預算放進 CI：bundle 大小、首屏時間超標就讓建置失敗（tibo.dog：首次下載 &gt; 預算即 fail）</label></li>
+      <li><input type="checkbox" id="c2g"><label for="c2g">建立固定節奏：每糾正 Agent 一次 → 評估是否新增一條 Lint（7 → 167 就是這樣累積的）</label></li>
+    </ul>
+  </div></div>
+
+  <div class="phase"><div class="badge">3</div><div class="card">
+    <h3>除草：清理辯護型註解與垃圾 Markdown</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c3a"><label for="c3a">搜尋「臨時」「先這樣」「改動太大」「workaround」「TODO hack」類註解，修根因或轉成型別/Lint 後刪除</label></li>
+      <li><input type="checkbox" id="c3b"><label for="c3b">用 <code>/no-comments</code>（comment-sicko 唯讀審校）把關，先 <code>/how</code> <code>/why</code> 確認沒有外部限制</label></li>
+      <li><input type="checkbox" id="c3c"><label for="c3c">保留業務領域不變量的說明註解；禁止的是「解釋為什麼偷懶」的過程註解</label></li>
+      <li><input type="checkbox" id="c3d"><label for="c3d">禁止 Agent 自行產生未要求的 Markdown 文件</label></li>
+      <li><input type="checkbox" id="c3e"><label for="c3e">搜尋 <code>setTimeout(..., 0)</code> 等「延遲一下就好」的補丁，避免變成 183 個計時器</label></li>
+    </ul>
+  </div></div>
+
+  <div class="phase"><div class="badge">4</div><div class="card">
+    <h3>建立執行期驗證：Feature Map + CLI</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c4a"><label for="c4a">為核心頁面寫最小 Feature Map：功能、到達路徑、什麼狀態算成功</label></li>
+      <li><input type="checkbox" id="c4b"><label for="c4b">把 CDP / Playwright 操作包成 CLI（aria-click、snapshot、screenshot），並替 CLI 寫測試</label></li>
+      <li><input type="checkbox" id="c4c"><label for="c4c">規定 UI 類 PR 必附截圖或影片，審查者先看證據再決定要不要看 diff</label></li>
+      <li><input type="checkbox" id="c4e"><label for="c4e">讓核心邏輯可重播（確定性 / 事件記錄），Bug 可重現、Agent 能自行重播驗證</label></li>
+      <li><input type="checkbox" id="c4d"><label for="c4d">複雜互動用 <code>/statechart</code> 畫狀態機一併審查</label></li>
+    </ul>
+  </div></div>
+
+  <div class="phase"><div class="badge">5</div><div class="card">
+    <h3>改變工作方式：目標導向派工 + 窄 PR + 獨立裁判</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c5f"><label for="c5f">先只並行 1–5 個 Agent，看清它們在哪裡犯錯；信任攢夠了再加量（不信任就硬開 100 個，只會換來低品質 PR 與回歸）</label></li>
+      <li><input type="checkbox" id="c5a"><label for="c5a">派工只寫「目標 / 完成標準 / 實跑證據」，交給 <code>/poteto-mode</code> 路由劇本</label></li>
+      <li><input type="checkbox" id="c5b"><label for="c5b">動手前先 <code>/how</code> + <code>/why</code>；關鍵設計用 <code>/arena</code> 多稿 + <code>/interrogate</code> 對抗審查</label></li>
+      <li><input type="checkbox" id="c5c"><label for="c5c">拆成窄 PR 棧；寫碼 Agent 不得自審，每個 PR 由全新 Agent 實跑驗證</label></li>
+      <li><input type="checkbox" id="c5d"><label for="c5d">異質模型分工：快模型寫碼、強模型做架構與裁判</label></li>
+      <li><input type="checkbox" id="c5e"><label for="c5e">可選：<code>/pstack:automate-me</code> 從你自己的對話記錄提煉專屬 <code>&lt;名字&gt;-mode</code></label></li>
+    </ul>
+  </div></div>
+
+  <div class="phase"><div class="badge">6</div><div class="card">
+    <h3>高價值核心鏈路才上形式化驗證</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c6a"><label for="c6a">挑出 1–2 條高風險流程（並發重試、跨裝置同步、付款狀態機）</label></li>
+      <li><input type="checkbox" id="c6b"><label for="c6b">用 <code>/create-formal-verification-skill</code> 建 TLA+ 模型；交付前先在改壞的變體上報錯</label></li>
+      <li><input type="checkbox" id="c6c"><label for="c6c">UI 層加屬性測試（Bombadil）自動探索邊界 Bug</label></li>
+    </ul>
+  </div></div>
+
+  <div class="phase"><div class="badge">7</div><div class="card">
+    <h3>最後才接外迴圈自動化</h3>
+    <ul class="check">
+      <li><input type="checkbox" id="c7a"><label for="c7a">確認內迴圈已是高信任（回滾率穩定、PR 都附驗證證據）</label></li>
+      <li><input type="checkbox" id="c7b"><label for="c7b">從低風險觸發點開始：Cron、發版後 Fuzz、監控告警 → 自動開修復 PR</label></li>
+      <li><input type="checkbox" id="c7c"><label for="c7c">過夜任務一律記 <code>decisions.tsv</code>，早上用 <code>/show-me-your-work</code> 審計</label></li>
+    </ul>
+  </div></div>
+</section>
+<section id="caveats">
+  <h2><span class="num">01</span>注意事項與適用邊界</h2>
+  <div class="grid g2">
+    <div class="card warn small"><b>「砍掉 98% 註解」有前提</b><br>Grok Bot 的目錄結構、型別系統與 API 命名本身夠清楚。老專案若充滿歷史黑盒與隱式狀態機，一刀切只會讓人與 Agent 一起抓瞎。重點是禁止「辯護型過程註解」，保留領域不變量說明。</div>
+    <div class="card warn small"><b>TLA+ / Lean 只用在高價值鏈路</b><br>Agent 降低了撰寫門檻，但建模與解釋仍很耗 Token（參考 70% 驗證開銷）。中小團隊先把 Lint + 依賴邊界 + CLI 截圖自檢跑起來，CP 值遠高於全面形式化驗證。</div>
+    <div class="card dont small"><b>不要做的事</b>
+      <ul>
+        <li>Agent 一犯錯就往 CLAUDE.md / AGENTS.md 加一行</li>
+        <li>在壞的內迴圈上接自動化觸發器</li>
+        <li>讓寫碼的 Agent 自己審自己的 PR</li>
+        <li>用 Prompt 寫流程說明書微操 Agent</li>
+        <li>犯一次錯就立規矩（要兩次）</li>
+      </ul>
+    </div>
+    <div class="card small"><b>一句話總結</b><br>護城河正從「自己手寫每一行」轉向「搭一套確定性環境，讓 Agent 很難寫出垃圾，並且能自己證明它是對的」。</div>
+  </div>
+</section>
+<div class="pager"><a href="pstack.html"><small>← 上一頁</small>pstack 開源</a></div>
+</main>
+<footer><div class="wrap">資料來源：<br>
+・<a href="https://zhuanlan.zhihu.com/p/2104561652888876670">Grok Bot 工程師土豆姐：所有程式碼都是垃圾（我的除外）— Ai學習的老章，知乎，2026-11-13</a><br>
+・<a href="https://mp.weixin.qq.com/s/7I8p5lG4q1swF09ELF1jGw">Grok 土豆姐的 Agent 實戰經驗，這套 Harness 已開源！— Ai學習的老章，微信，2026-11-08</a><br>
+・<a href="https://x.com/poteto/status/2117043478140276847">poteto 的 tibo.dog trivia 推文，X，2026-11-02</a><br>
+・<a href="https://x.com/MaiYangAI/article/2111603532210299234">非 CS 出身的 Lauren Tan，是怎麼一步步放手給 agent 的 — Mai Yang，X 長文，2026-10-18</a><br>
+・<a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins · pstack（MIT），commit e58dd04，2026-11-19</a><br>
+原始演講：Lauren Tan (poteto)《All Code Is Slop (Except Mine)》，AI Engineer Code Summit。「優化步驟」為依上述內容整理的落地建議。</div></footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

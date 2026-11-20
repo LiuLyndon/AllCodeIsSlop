@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14 條工程清單</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg on" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a></div></div>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">tibo.dog · X 推文 · 2026-11-02</div>
+    <h1>14 條工程清單<small>4 天、約 1,150 個 PR 的遊戲是怎麼做出來的</small></h1>
+    <p class="lede">poteto 為回敬 Tibo 而做的 tibo.dog，用 Grok Bot 與 Cursor 4 天完成。她在推文裡列出的 14 條 trivia，濃縮了整套方法論。</p>
+    <nav class="toc"><div class="wrap"><a href="#context">背景</a><a href="#list">14 條清單</a><a href="#takeaways">可借用做法</a></div></nav>
+  </div>
+</header>
+<main class="wrap">
+<section id="context">
+  <h2><span class="num">00</span>背景：4 天、約 1,150 個 PR 的「整活」小遊戲</h2>
+  <p class="sub">2026-11-02，poteto 在 X 發佈 tibo.dog（$5.99 買的網域），一款可直接在 X 貼文內遊玩的像素「倖存者」類遊戲，同日貼出 14 條開發花絮。原作者「老章」稱它為「14 條工程清單」，並指出它本質上是 pstack 的一次 96 小時公開極限壓測。</p>
+  <div class="grid g4">
+    <div class="card stat"><div class="v">4 天</div><div class="k">業餘專案開發時間</div></div>
+    <div class="card stat"><div class="v">~1,150</div><div class="k">合入 PR 數</div></div>
+    <div class="card stat"><div class="v">124 KB</div><div class="k">首次下載（gzip）</div></div>
+    <div class="card stat"><div class="v">60 fps</div><div class="k">中階手機 500 隻敵人</div></div>
+  </div>
+</section>
+
+<section id="list">
+  <h2><span class="num">01</span>14 條清單重點（依主題歸納）</h2>
+  <p class="sub">以下為重點摘要，非逐條翻譯；原文請見 <a href="https://x.com/poteto/status/2117043478140276847">poteto 的推文</a>。</p>
+  <div class="tlist">
+    <div class="titem"><div class="tn">A</div><div><b>用工具取代記憶</b>
+      <p class="why">每發現一個問題就請 bot 寫成 Lint 規則，連註解都由 Lint 禁止（需要解釋就改命名或補測試）。熱路徑檔案用 <code>.hot.ts</code> 標示並禁止配置記憶體；首次下載超出預算時建置直接失敗。<br>對應原則：<code>encode-lessons-in-structure</code>。圖解見 <a href="talk.html#codebase">演講 › 目錄即上下文</a>。</p></div></div>
+    <div class="titem"><div class="tn">B</div><div><b>用驗證取代人工試玩</b>
+      <p class="why">劇情、過場與遊戲系統的狀態機用 TLA+ 驗證，每個主要系統一個形式化驗證技能。模擬完全確定，可從輸入重播；上傳高分時伺服器重播整局防作弊。bot 以 headless 方式試玩，依目標存活率調整難度。<br>對應原則：<code>prove-it-works</code>、<code>build-the-lever</code>。</p></div></div>
+    <div class="titem"><div class="tn">C</div><div><b>一切都是程式碼</b>
+      <p class="why">引擎大多自製（three.js 只負責 3D 繪製）。沒有音訊檔，音樂與音效在瀏覽器即時合成；像素美術也由程式碼繪製並在建置時打包。Agent 因此能讀、能改、能 diff、能驗證，沒有黑盒素材。</p></div></div>
+    <div class="titem"><div class="tn">D</div><div><b>明確的體驗門檻</b>
+      <p class="why">可直接在 X 貼文內遊玩，目標是中階手機上數百個敵人仍維持 60 fps；支援多語系與依戰績動態產生的分享圖，不同區域的音樂無縫銜接。<br>對應原則：<code>experience-first</code>、<code>explain-the-number</code>。</p></div></div>
+    <div class="titem"><div class="tn">E</div><div><b>速度來自上面四點</b>
+      <p class="why">業餘專案 4 天合入約 1,150 個 PR。不是靠更多人力，而是窄 PR 加上每一步都可自動驗證（<code>sequence-verifiable-units</code>）。</p></div></div>
+  </div>
+</section>
+
+<section id="takeaways">
+  <h2><span class="num">02</span>可以直接借用的 6 個做法</h2>
+  <div class="grid g3">
+    <div class="card small"><b>① 每個 Bug → 一條 Lint</b><br>修完 Bug 順手請 Agent 寫規則並附修正指引，規則先在原 Bug 上報紅。</div>
+    <div class="card small"><b>② 檔名傳遞約束</b><br><code>*.hot.ts</code>、<code>*.server.ts</code>、<code>*.pure.ts</code>… 再用 Lint 依檔名套規則。</div>
+    <div class="card small"><b>③ 預算進 CI</b><br>bundle 大小、首屏時間、FPS 門檻，超標就讓建置失敗。</div>
+    <div class="card small"><b>④ 讓系統可重播</b><br>確定性 / 事件溯源讓 Bug 可重現，Agent 能自行重播驗證。</div>
+    <div class="card small"><b>⑤ 資產程式碼化</b><br>能用程式碼表達的資產（圖示、音效、設定）就別用二進位檔，Agent 才看得懂、改得動。</div>
+    <div class="card small"><b>⑥ 自動化實跑調校</b><br>headless bot / E2E 腳本取代人工試玩，產出可重跑的證據。</div>
+  </div>
+</section>
+
+<div class="pager"><a href="talk.html"><small>← 上一頁</small>演講重點</a><a class="next" href="pstack.html"><small>下一頁 →</small>pstack 開源</a></div>
+</main>
+<footer><div class="wrap">資料來源：<br>
+・<a href="https://zhuanlan.zhihu.com/p/2104561652888876670">Grok Bot 工程師土豆姐：所有程式碼都是垃圾（我的除外）— Ai學習的老章，知乎，2026-11-13</a><br>
+・<a href="https://mp.weixin.qq.com/s/7I8p5lG4q1swF09ELF1jGw">Grok 土豆姐的 Agent 實戰經驗，這套 Harness 已開源！— Ai學習的老章，微信，2026-11-08</a><br>
+・<a href="https://x.com/poteto/status/2117043478140276847">poteto 的 tibo.dog trivia 推文，X，2026-11-02</a><br>
+・<a href="https://x.com/MaiYangAI/article/2111603532210299234">非 CS 出身的 Lauren Tan，是怎麼一步步放手給 agent 的 — Mai Yang，X 長文，2026-10-18</a><br>
+・<a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins · pstack（MIT），commit e58dd04，2026-11-19</a><br>
+原始演講：Lauren Tan (poteto)《All Code Is Slop (Except Mine)》，AI Engineer Code Summit。「優化步驟」為依上述內容整理的落地建議。</div></footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

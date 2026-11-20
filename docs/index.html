@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All Code Is Slop</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="sitenav"><div class="wrap"><a class="brand" href="index.html">All Code Is Slop</a><a class="pg on" href="index.html">總覽</a><a class="pg" href="lauren.html">人物與信任</a><a class="pg" href="talk.html">演講重點</a><a class="pg" href="tibo-14.html">14 條清單</a><a class="pg" href="pstack.html">pstack 開源</a><a class="pg" href="roadmap.html">優化步驟</a></div></div>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Grok Bot · Lauren Tan (poteto) · 整理總覽</div>
+    <h1>All Code Is Slop <span class="muted">(Except Mine)</span><small>所有程式碼都是垃圾（我的除外）—— 文章、推文與 GitHub 整理</small></h1>
+    <p class="lede">整理兩篇「Ai學習的老章」文章、Mai Yang 的人物長文、poteto 的 tibo.dog 14 條推文，以及 Cursor 官方倉庫中的開源 Agent Harness <code>pstack</code>，最後彙整成團隊可執行的優化步驟。核心訊息只有一句：<b>AI 時代的護城河，是搭一套連 Agent 都很難寫出垃圾的確定性環境，而不是更長的 Prompt。</b></p>
+    
+  </div>
+</header>
+<main class="wrap">
+<section id="hub">
+  <div class="grid g4">
+    <div class="card stat"><div class="v">10,926</div><div class="k">Grok Bot 團隊 10 月合併 PR</div></div>
+    <div class="card stat"><div class="v">0.47%</div><div class="k">10 月 Commit 回滾率</div></div>
+    <div class="card stat"><div class="v">~1,150</div><div class="k">tibo.dog 4 天合入 PR</div></div>
+    <div class="card stat"><div class="v">58</div><div class="k">pstack 開源技能數</div></div>
+  </div>
+  <div class="quote">一句話：與其往 AGENTS.md 加規則或靠人工 review 兜底，不如把教訓焊進架構、型別與 Lint，並讓 Agent 自己跑驗證、交出證據。</div>
+
+  <h2 style="margin-top:32px">分頁導覽</h2>
+  <p class="sub">建議閱讀順序：人物與信任 → 演講重點 → 14 條清單 → pstack → 優化步驟。</p>
+  <div class="grid g2">
+    <a class="card hub" href="lauren.html"><span class="hn">01</span><b>人物與信任</b><p>非 CS 出身的成長路徑、信任曲線（為什麼不能從 5 個 Agent 直接跳到 100 個）、從 Benny 到 Grok Bot。</p></a>
+    <a class="card hub" href="talk.html"><span class="hn">02</span><b>演講重點</b><p>Poteto 信任倒金字塔、Dune 框架、183 個計時器的教訓、註解砍 98%、Feature Map 與 TLA+、生產成績單與效能表。</p></a>
+    <a class="card hub" href="tibo-14.html"><span class="hn">03</span><b>14 條工程清單</b><p>tibo.dog 4 天 1,150 PR 的推文重點依主題歸納，對應背後的 pstack 原則與可借用做法。</p></a>
+    <a class="card hub" href="pstack.html"><span class="hn">04</span><b>pstack 開源 Harness</b><p>GitHub 位置、安裝、34 個技能、22 套劇本、24 條原則、2 個子 Agent，以及文章與 repo 現況差異。</p></a>
+    <a class="card hub" href="roadmap.html"><span class="hn">05</span><b>優化步驟</b><p>Phase 0–7 可勾選的落地路線圖，加上適用邊界與「不要做的事」。</p></a>
+  </div>
+
+  <h2 style="margin-top:36px">主題索引：每個主題只在一處詳述</h2>
+  <p class="sub">四個來源有大量重疊。下表列出合併後每個主題的「主要位置」，其他頁面只放連結或一句話。</p>
+  <div class="tscroll">
+  <table class="tbl">
+    <thead><tr><th>主題</th><th>主要位置</th><th>其他提及</th><th>來源</th></tr></thead>
+    <tbody>
+      <tr><td>人物背景、信任曲線、Benny</td><td><a href="lauren.html">人物與信任</a></td><td>—</td><td>Mai Yang</td></tr>
+      <tr><td>信任金字塔 / 四層防線（三個版本）</td><td><a href="talk.html#pyramid">演講 › 金字塔</a></td><td>pstack › /correct、人物 › 信任曲線</td><td>知乎・微信・Mai Yang</td></tr>
+      <tr><td>Dune、目錄即上下文、183 計時器</td><td><a href="talk.html#codebase">演講 › 程式碼庫</a></td><td>14 條（.hot.ts）</td><td>知乎</td></tr>
+      <tr><td>註解清理 / Comment Sicko</td><td><a href="talk.html#codebase">演講 › 程式碼庫</a></td><td>pstack › 子 Agent、14 條 #14、優化 Phase 3</td><td>知乎・微信・GitHub</td></tr>
+      <tr><td>Feature Map、TLA+、Lean、70% Token</td><td><a href="talk.html#verify">演講 › 驗證體系</a></td><td>pstack › ④ 一句話糾偏</td><td>知乎・GitHub</td></tr>
+      <tr><td>tibo.dog 14 條</td><td><a href="tibo-14.html">14 條清單</a></td><td>pstack › 運作方式</td><td>X 推文・微信</td></tr>
+      <tr><td>pstack 安裝、架構、技能、劇本、原則</td><td><a href="pstack.html">pstack</a></td><td>優化 Phase 1</td><td>微信・GitHub</td></tr>
+      <tr><td>可執行步驟（含 Mai Yang 的實作建議）</td><td><a href="roadmap.html">優化步驟</a></td><td>人物 › 個人習慣</td><td>綜合</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<div class="pager"><a class="next" href="lauren.html"><small>下一頁 →</small>人物與信任</a></div>
+</main>
+<footer><div class="wrap">資料來源：<br>
+・<a href="https://zhuanlan.zhihu.com/p/2104561652888876670">Grok Bot 工程師土豆姐：所有程式碼都是垃圾（我的除外）— Ai學習的老章，知乎，2026-11-13</a><br>
+・<a href="https://mp.weixin.qq.com/s/7I8p5lG4q1swF09ELF1jGw">Grok 土豆姐的 Agent 實戰經驗，這套 Harness 已開源！— Ai學習的老章，微信，2026-11-08</a><br>
+・<a href="https://x.com/poteto/status/2117043478140276847">poteto 的 tibo.dog trivia 推文，X，2026-11-02</a><br>
+・<a href="https://x.com/MaiYangAI/article/2111603532210299234">非 CS 出身的 Lauren Tan，是怎麼一步步放手給 agent 的 — Mai Yang，X 長文，2026-10-18</a><br>
+・<a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins · pstack（MIT），commit e58dd04，2026-11-19</a><br>
+原始演講：Lauren Tan (poteto)《All Code Is Slop (Except Mine)》，AI Engineer Code Summit。「優化步驟」為依上述內容整理的落地建議。</div></footer>
+<script src="assets/app.js"></script>
+</body>
+</html>
